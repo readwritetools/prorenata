@@ -1,0 +1,54 @@
+!blue 2.0
+
+template {
+	bifurcate 	 bifurcate <source> <dest> --define=RWDOC
+	blue 		 blue compile <source> <dest> --progress
+	exim 		 C:/neonave/lib/exim/exim <source> <dest> <rootfile>
+	uglify       uglifyjs <source> --output <dest> --ecma 8 --compress		/* npm install uglify-es -g */
+}
+
+// ---------- merge appA proto --> appA fused ---------- 
+copy {
+	source    appA/proto
+	dest      appA/fused
+	overwrite older			// older† | always | never
+	// onfailure halt			// halt | continue†
+}
+//
+//  ---------- merge appSuite proto --> appA fused ---------- 
+copy {
+	source    appSuite/proto
+	dest      appA/fused
+	exclude   appSuite/proto/code		// copy this directory using bifucate
+	overwrite older
+}
+//
+//  ---------- conditional compile appSuite code --> appA code ---------- 
+recurse {
+	source    appSuite/proto/code
+	dest      appA/fused/code
+	overwrite older
+	exec      bifurcate
+}
+//
+//  ---------- process blue-phrase --> html
+blue {
+	source    appA/fused/blue
+	dest      appA/fused/html
+}
+//
+//  ---------- transpile import/export code --> require/module ---------- 
+exim {
+	source    appA/fused/code
+	dest      appA/fused/dbg
+	rootfile  appA/fused/code/page-one-handler.js
+}
+//
+//  ---------- remove comments and whitespace ---------- 
+recurse {
+	source    appA/fused/dbg
+	dest      appA/fused/dst
+	overwrite older
+	exec      uglify
+}
+
