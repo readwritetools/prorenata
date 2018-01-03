@@ -61,7 +61,8 @@ class Main {
 		this.commands.set('copy',    'builtin');
 		this.commands.set('recurse', 'builtin');
 	}
-	
+
+	// CLI entry point
 	execute() {
 		// argv[0] node
 		// argv[1] main.js
@@ -126,8 +127,8 @@ class Main {
 	processCommand(entity) {
 		expect(entity, ['GroupEntity', 'StandardEntity']);
 		
-		//> cmd is one of the builtin command, or one of the user-defined commands:
-		//   define | copy | move | recurse
+		//> cmd is one of the builtin command, or one of the commands defined by the user inside the 'template' command
+		//   template | copy | recurse
 		var cmd = entity.name;
 		
 		if (!this.commands.has(cmd)) {
@@ -144,11 +145,11 @@ class Main {
 	
 	//> cmd is template | copy | recurse
 	//> entity is a group that contains definitions (for 'template') or parameters (for 'copy' and 'recurse')
-	processBuiltinCommand(cmd, entity) {
-		expect(cmd, 'String');
+	processBuiltinCommand(cmdName, entity) {
+		expect(cmdName, 'String');
 		expect(entity, 'GroupEntity');
 		
-		switch (cmd) {
+		switch (cmdName) {
 			case 'template':
 				this.processTemplateCommand(entity);
 				break;
@@ -162,27 +163,31 @@ class Main {
 				break;
 				
 			default:
-				log.logic(`Unhandled builtin command '${cmd}'`);
+				log.logic(`Unhandled builtin command '${cmdName}'`);
 		}
 	}
 	
-	processUserDefinedCommand(cmd, cmdTemplate, localEntity) {
-		expect(cmd, 'String');
+	processUserDefinedCommand(cmdName, cmdTemplate, localEntity) {
+		expect(cmdName, 'String');
 		expect(cmdTemplate, 'String');
 		expect(localEntity, ['GroupEntity', 'StandardEntity']);
 		
-		var paramMap = this.buildParameterMap(cmd, localEntity);
-		this.verifyUserParams(cmd, paramMap);
-		var cmdFrozen = this.freezeTemplate(cmdTemplate, paramMap);
+		var paramMap = this.buildParameterMap(cmdName, localEntity);
+		this.verifyUserParams(cmdName, paramMap);
 		
-		log.trace(`${blue}${cmd}${nocolor} ${yellow}${cmdFrozen}${nocolor}`);
+		var processArgs = cmdTemplate.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
+		var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
+		this.executeChildProcess(cmdName, finalArgs);
+		
+		//log.trace(`${blue}${cmd}${nocolor} ${yellow}${cmdFrozen}${nocolor}`);
 	}
 	
 	//-------------------------------------------------------------------------
 	// built-in commands
 	//-------------------------------------------------------------------------
 	
-	//^ Add a new cmdTemplate to the map of commands
+	//^ The 'template' command
+	//  children under here define new commands that are immediately available for use in subsequent instruction file lines 
 	processTemplateCommand(defineEntity) {
 		expect(defineEntity, 'GroupEntity');
 
@@ -191,9 +196,9 @@ class Main {
 			var type = childEntity.entityType;
 
 			if ( type == 'StandardEntity') {
-				var cmd = childEntity.name;
+				var cmdName = childEntity.name;
 				var cmdTemplate = childEntity.innerText;
-				this.commands.set(cmd, cmdTemplate);
+				this.commands.set(cmdName, cmdTemplate);
 			}
 			else if (type == 'PragmaEntity' || type == 'GraynoteEntity')
 				continue;
@@ -209,7 +214,14 @@ class Main {
 		var paramMap = this.buildParameterMap('copy', copyEntity);
 		this.verifyBuiltinParams('copy', paramMap);
 
-		this.beginRecursion('copy', 'cp --preserve <source> <dest>', paramMap);
+		// 'cp --preserve <source> <dest>'
+		var processArgs = [
+			'cp',
+			'--preserve',
+			'<source>',
+			'<dest>'
+			];
+		this.beginRecursion('copy', processArgs, paramMap);
 	}
 	
 	//^ The 'recurse' command
@@ -227,16 +239,18 @@ class Main {
 		}
 		var cmdTemplate = this.commands.get(cmdName);
 		expect(cmdTemplate, 'String');
+		
+		var processArgs = cmdTemplate.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
 
-		this.beginRecursion(cmdName, cmdTemplate, paramMap);
+		this.beginRecursion(cmdName, processArgs, paramMap);
 	}
 
 	//> cmdName is either 'copy', or the <exec> param of a 'recurse' command
-	//> cmdTemplate is the value pointed to by the <exec> param
+	//> processArgs is an array where [0] is the executable, and [1]..[N] are the arguments
 	//> paramMap is a map of all parameter values 
-	beginRecursion(cmdName, cmdTemplate, paramMap) {
+	beginRecursion(cmdName, processArgs, paramMap) {
 		expect(cmdName, 'String');
-		expect(cmdTemplate, 'String'); 
+		expect(processArgs, 'Array'); 
 		expect(paramMap,  'Map');
 		
 		expect(this.instructionPfile, 'Pfile');
@@ -267,22 +281,22 @@ class Main {
 		paramMap.delete('exclude');
 		paramMap.delete('overwrite');
 		
-		this.recurseFileSystem(source, dest, cmdName, cmdTemplate, paramMap, includePatterns, excludePatterns, overwriteRule);		
+		this.recurseFileSystem(source, dest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule);		
 	}
 	
 	//> source is a Pfile of the fully qualified name at this level of recursion
 	//> dest is a Pfile of the fully qualified name at this level of recursion
 	//> cmdName is name pointed to by the 'exec' param
-	//> cmdTemplate is the raw command with unresolved parameter names
+	//> processArgs is an array where [0] is the executable, and [1]..[N] are the arguments
 	//> paramMap is a map of all parameter values, except 'exec', 'include', and 'exclude'
 	//> includePatterns is an array of patterns of filenames that should be included in further processing
 	//> excludePatterns is an array of patterns of filenames that should be excluded from further processing
 	//> allowOverwrite is always | older | never
-	recurseFileSystem(source, dest, cmdName, cmdTemplate, paramMap, includePatterns, excludePatterns, overwriteRule) {
+	recurseFileSystem(source, dest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule) {
 		expect(source, 'Pfile');
 		expect(dest, 'Pfile');
 		expect(cmdName, 'String');
-		expect(cmdTemplate, 'String'); 
+		expect(processArgs, 'Array'); 
 		expect(paramMap,  'Map');
 		expect(includePatterns, 'Array'); 
 		expect(excludePatterns, 'Array');
@@ -291,6 +305,9 @@ class Main {
 			if (this.isExcluded(source, cmdName, excludePatterns))
 				return;
 
+			// if 'mkdir' == true
+			dest.mkDir();
+			
 			var bunch = new Bunch(source.name, '*', Bunch.FILE + Bunch.DIRECTORY);
 			var files = bunch.find(false);
 			
@@ -298,7 +315,7 @@ class Main {
 				var basename = files[i];
 				var childSource = new Pfile(source).addPath(basename);
 				var childDest = new Pfile(dest).addPath(basename);
-				this.recurseFileSystem(childSource, childDest, cmdName, cmdTemplate, paramMap, includePatterns, excludePatterns, overwriteRule);
+				this.recurseFileSystem(childSource, childDest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule);
 			}
 		}
 		else if (source.isFile()) {
@@ -309,34 +326,44 @@ class Main {
 				return;
 
 			if (!this.allowOverwrite(source, dest, overwriteRule)) {
-				log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${blue}${overwriteRule}${nocolor} ${source.name}`);
+				if (overwriteRule == 'older')
+					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${dest.name} ${blue}not newer than${nocolor} ${source.name}`);
+				else // if (overwriteRule == 'never')
+					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${dest.name} ${blue}already exists${nocolor}`);
 				return;
 			}
 			
 			paramMap.set('source', source.name);
 			paramMap.set('dest', dest.name);
-			var cmdFrozen = this.freezeTemplate(cmdTemplate, paramMap);
-
-			this.executeTask(cmdName, cmdFrozen);
+			var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
+			this.executeChildProcess(cmdName, finalArgs);
 		}
 		else
 			log.warning(`${blue}${cmdName}${nocolor} ${source.name} ${red}NOT FOUND${nocolor}`);
 	}
 	
-	executeTask(cmdName, cmdFrozen) {
+	//> cmdName is for console feedback only
+	//> finalArgs[0] is the executable filename, finalArgs[1]...[N] are the arguments
+	executeChildProcess(cmdName, finalArgs) {
 		expect(cmdName, 'String');
-		expect(cmdFrozen, 'String');
+		expect(finalArgs, 'Array');
 
-		var space = cmdFrozen.indexOf(' ');
-		var file = cmdFrozen.substr(0, space).trim();
-		var args = cmdFrozen.substr(space+1).split(' ');
+		var exeFile = finalArgs[0];
+		var args = finalArgs.slice(1);
 		var options = {
 			cwd: this.instructionPfile.getPath()
 		};
 		
-		log.trace(`${blue}${cmdName}${nocolor} ${yellow}${file} :: ${args[0]}${nocolor}`);
-
-		ChildProcess.execFileSync(file, args, options);		
+		try {
+			log.trace(`${blue}${cmdName}${nocolor} ${yellow}${finalArgs.join(' ')}${nocolor}`);
+			ChildProcess.execFileSync(exeFile, args, options);
+		}
+		catch(err) {
+			var message = err.message
+				.replace('spawnSync', "Couldn't start")
+				.replace('ENOENT', '(No such file or directory)');
+			log.abnormal(`${blue}${cmdName}${nocolor} ${message}`);
+		}
 	}
 	
 	//-------------------------------------------------------------------------
@@ -398,7 +425,7 @@ class Main {
 			// does this user's pattern match the trailing portion of the user's path?
 			var rx = new RegExp(pattern + '$');
 			if (rx.test(filename)) {
-				log.trace(`${blue}${cmdName}${nocolor} excluding ${blue}${excludePatterns[i]}${nocolor} ${filename}`);
+				log.trace(`${blue}${cmdName}${nocolor} excluding ${filename} by request ${blue}${excludePatterns[i]}${nocolor}`);
 				return true;
 			}
 		}
@@ -577,19 +604,31 @@ class Main {
 		}
 	}
 
-	//^ The freezeTemplate function replaces parameter names with parameter values
-	//< Returns the template where names are replaced with values
-	freezeTemplate(cmdTemplate, paramMap) {
-		expect(cmdTemplate, 'String');
+	//^ The replaceParamsWithValues function replaces parameter names with parameter values
+	//< returns an array of final args, where
+	//     finalArgs[0] is the executable command,
+	//     <substitution> parameters are replaced with their corrects values,
+	//     all other args are passed through as-is.
+	replaceParamsWithValues(processArgs, paramMap) {
+		expect(processArgs, 'Array');
 		expect(paramMap, 'Map');
-		
-		var cmdFrozen = cmdTemplate;
-		// find and replace parameters in the template
-		for (let [paramName, paramValue] of paramMap.entries()) {
-			var prefixedName = `<${paramName}>`;
-			cmdFrozen = cmdFrozen.replace(prefixedName, paramValue);
+
+		var finalArgs = new Array();
+		finalArgs.push(processArgs[0]); // the executable command
+
+		for (let i=1; i < processArgs.length; i++) {
+			var template = processArgs[i];		// like <source>
+			if ((template.charAt(0) == '<') && (template.charAt(template.length-1) == '>')) { 
+				var unadorned = template.substr(1, template.length-2);			// like source
+				if (paramMap.has(unadorned)) {
+					var replacementValue = paramMap.get(unadorned);
+					finalArgs.push(replacementValue);
+					continue;
+				}
+			}
+			finalArgs.push(processArgs[i]);		// pass through as-is
 		}
-		return cmdFrozen;
+		return finalArgs;
 	}
 	
 	//^ Filenames that begin with a relative path are problemmatic and must be quoted.

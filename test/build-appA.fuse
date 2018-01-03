@@ -2,31 +2,33 @@
 
 template {
 	bifurcate 	 bifurcate <source> <dest> --define=RWDOC
-	blue 		 blue compile <source> <dest> --progress
-	exim 		 C:/neonave/lib/exim/exim <source> <dest> <rootfile>
-	uglify       uglifyjs <source> --output <dest> --ecma 8 --compress		/* npm install uglify-es -g */
+	blue 		 node C:/neonave/lib/bluephrase/dbg/main.js compile <source> <dest> --progress
+	exim 		 node --use_strict C:/neonave/lib/exim/src/rewrite.js <source> <dest> <rootfile>
+	uglify       node C:/Users/Propellerhead/AppData/Roaming/npm/node_modules/uglify-es/bin/uglifyjs <source> --output <dest> --ecma 8 --compress		/* npm install uglify-es -g */
 }
 
 // ---------- merge appA proto --> appA fused ---------- 
 copy {
 	source    appA/proto
 	dest      appA/fused
-	overwrite older			// older† | always | never
+	overwrite older				// older† | always | never
 	// onfailure halt			// halt | continue†
+	// quiet true				// true | false†
+	// mkdir true				// true† | false
 }
 //
 //  ---------- merge appSuite proto --> appA fused ---------- 
 copy {
 	source    appSuite/proto
 	dest      appA/fused
-	exclude   appSuite/proto/code		// copy this directory using bifucate
+	exclude   appSuite/proto/js		// copy this directory using bifucate
 	overwrite older
 }
 //
 //  ---------- conditional compile appSuite code --> appA code ---------- 
 recurse {
-	source    appSuite/proto/code
-	dest      appA/fused/code
+	source    appSuite/proto/js
+	dest      appA/fused/js
 	overwrite older
 	exec      bifurcate
 }
@@ -39,9 +41,9 @@ blue {
 //
 //  ---------- transpile import/export code --> require/module ---------- 
 exim {
-	source    appA/fused/code
+	source    appA/fused/js
 	dest      appA/fused/dbg
-	rootfile  appA/fused/code/page-one-handler.js
+	rootfile  test.exim
 }
 //
 //  ---------- remove comments and whitespace ---------- 
