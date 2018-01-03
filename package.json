@@ -1,6 +1,6 @@
 {
   "name": "fuse",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "copy files from two or more source directories into one destination directory",
   "private": true,
   "main": "./src/main.class.js",
