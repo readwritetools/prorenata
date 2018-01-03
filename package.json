@@ -3,14 +3,14 @@
   "version": "1.0.4",
   "description": "copy files from two or more source directories into one destination directory",
   "private": true,
-  "main": "./src/main.class.js",
+  "main": "./dbg/main.class.js",
   "author": "Joe Honton",
   "license": "CC-BY-NC-ND 4.0",
   "scripts": {
     "build": "npm run exim && npm run app",
     "exim": "C:/neonave/lib/exim/exim ./src ./dbg main.class.js",
-    "app": "node ./dbg/main.class.js ./test/build-appA.fuse",
-    "app-inspect": "node --inspect-brk=9229 ./dbg/main.class.js ./test/build-appA.fuse",
+    "app": "node ./bin/fuse ./test/build-appA.fuse",
+    "app-inspect": "node --inspect-brk=9229 ./bin/fuse ./test/build-appA.fuse",
     "bump-version": "npm version patch && git push && git push --tags"
   },
   "dependencies": {
@@ -18,6 +18,6 @@
     "joezone": "git+ssh://root@nk021:/keep/joezone#*"
   },
   "bin": {
-    "fuse001": "./bin/fuse"
+    "fuse": "./bin/fuse"
   }
 }

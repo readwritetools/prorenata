@@ -44,7 +44,7 @@ class log {
 }
 
 
-class Main {
+module.exports = class Main {
 
 	constructor() {
 		this.instructionPfile = null;		// fully qualified path to the instruction file
@@ -66,8 +66,7 @@ class Main {
 	execute() {
 		for(let i=0; i < process.argv.length; i++)
 			process.stderr.write(`argv[${i}]: ${process.argv[i]}\n`);
-		return;
-		
+				
 		// argv[0] node
 		// argv[1] main.js
 		// argv[2] instructionfile
