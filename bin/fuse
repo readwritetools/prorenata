@@ -1,0 +1,6 @@
+#!/usr/bin/env node
+
+var Main = require('../dbg/main.class.js');
+var main = new Main();
+main.execute();
+

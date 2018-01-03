@@ -18,6 +18,6 @@
     "joezone": "git+ssh://root@nk021:/keep/joezone#*"
   },
   "bin": {
-    "fuse001": "./dbg/main.class.js"
+    "fuse001": "./bin/fuse"
   }
 }

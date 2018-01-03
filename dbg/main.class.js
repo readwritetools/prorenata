@@ -648,5 +648,5 @@ class Main {
 	}
 }
 
-var main = new Main();
-main.execute();
+//var main = new Main();
+//main.execute();
