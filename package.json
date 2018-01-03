@@ -1,6 +1,6 @@
 {
   "name": "fuse",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "copy files from two or more source directories into one destination directory",
   "private": true,
   "main": "./dbg/main.class.js",
