@@ -12,8 +12,8 @@
 var expect = require('joezone').expect;
 var Pfile = require('joezone').Pfile;
 var Bunch = require('joezone').Bunch;
-var TextReader = require('joezone').TextReader;
-var TextWriter = require('joezone').TextWriter;
+//import {TextReader}		from 'joezone';
+//import {TextWriter}		from 'joezone';
 var FileInterface = require('bluephrase').FileInterface;
 var RootEntity = require('bluephrase').RootEntity;
 var EntityPath = require('bluephrase').EntityPath;
@@ -64,9 +64,6 @@ module.exports = class Main {
 
 	// CLI entry point
 	execute() {
-		for(let i=0; i < process.argv.length; i++)
-			process.stderr.write(`argv[${i}]: ${process.argv[i]}\n`);
-				
 		// argv[0] node
 		// argv[1] main.js
 		// argv[2] instructionfile
@@ -330,7 +327,7 @@ module.exports = class Main {
 
 			if (!this.allowOverwrite(source, dest, overwriteRule)) {
 				if (overwriteRule == 'older')
-					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${dest.name} ${blue}not newer than${nocolor} ${source.name}`);
+					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${source.name} ${blue}older than / same as${nocolor} ${dest.name}`);
 				else // if (overwriteRule == 'never')
 					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${dest.name} ${blue}already exists${nocolor}`);
 				return;

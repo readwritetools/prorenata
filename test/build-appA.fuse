@@ -34,9 +34,12 @@ recurse {
 }
 //
 //  ---------- process blue-phrase --> html
-blue {
+recurse {
 	source    appA/fused/blue
 	dest      appA/fused/html
+	// output    *.html				// TODO
+	exec      blue
+	overwrite older
 }
 //
 //  ---------- transpile import/export code --> require/module ---------- 

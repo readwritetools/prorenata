@@ -12,8 +12,8 @@
 import {expect}			from 'joezone';
 import {Pfile}			from 'joezone';
 import {Bunch}			from 'joezone';
-import {TextReader}		from 'joezone';
-import {TextWriter}		from 'joezone';
+//import {TextReader}		from 'joezone';
+//import {TextWriter}		from 'joezone';
 import {FileInterface}	from 'bluephrase';
 import {RootEntity}		from 'bluephrase';
 import {EntityPath}		from 'bluephrase';
@@ -64,9 +64,6 @@ export default class Main {
 
 	// CLI entry point
 	execute() {
-		for(let i=0; i < process.argv.length; i++)
-			process.stderr.write(`argv[${i}]: ${process.argv[i]}\n`);
-				
 		// argv[0] node
 		// argv[1] main.js
 		// argv[2] instructionfile
@@ -330,7 +327,7 @@ export default class Main {
 
 			if (!this.allowOverwrite(source, dest, overwriteRule)) {
 				if (overwriteRule == 'older')
-					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${dest.name} ${blue}not newer than${nocolor} ${source.name}`);
+					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${source.name} ${blue}older than / same as${nocolor} ${dest.name}`);
 				else // if (overwriteRule == 'never')
 					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${dest.name} ${blue}already exists${nocolor}`);
 				return;
