@@ -1,7 +1,7 @@
 {
   "name": "prorenata",
   "description": "Script a sequence of commands that work on deep file paths",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": "Joe Honton",
   "license": "CC-BY-NC-ND 4.0",
   "private": true,
@@ -21,7 +21,7 @@
     "joezone": "git+ssh://root@nk021:/keep/joezone#*"
   },
   "files": [
-  	"bin",
-  	"dbg"
+    "bin",
+    "dbg"
   ]
 }
