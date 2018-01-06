@@ -1,23 +1,26 @@
 {
-  "name": "fuse",
+  "name": "prorenata",
+  "description": "Script a sequence of commands that work on deep file paths",
   "version": "1.0.5",
-  "description": "copy files from two or more source directories into one destination directory",
-  "private": true,
-  "main": "./dbg/main.class.js",
   "author": "Joe Honton",
   "license": "CC-BY-NC-ND 4.0",
+  "private": true,
+  "main": "./dbg/main.class.js",
+  "bin": {
+    "prn": "./bin/prn"
+  },
   "scripts": {
     "build": "npm run exim && npm run app",
-    "exim": "C:/neonave/lib/exim/exim ./src ./dbg main.class.js",
-    "app": "node ./bin/fuse ./test/build-appA.fuse",
-    "app-inspect": "node --inspect-brk=9229 ./bin/fuse ./test/build-appA.fuse",
+    "exim": "node /musings/lib/exim/src/rewrite.js ./src ./dbg main.class.js",
+    "app": "node ./bin/prn ./test/build-appA.prn",
+    "app-inspect": "node --inspect-brk=9229 ./bin/fuse ./test/build-appA.prn",
     "bump-version": "npm version patch && git push && git push --tags"
   },
   "dependencies": {
     "bluephrase": "git+ssh://root@nk021:/keep/bluephrase#*",
     "joezone": "git+ssh://root@nk021:/keep/joezone#*"
   },
-  "bin": {
-    "fuse": "./bin/fuse"
-  }
+  "files": [
+  	"dbg"
+  ]
 }
