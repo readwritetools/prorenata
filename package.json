@@ -21,6 +21,7 @@
     "joezone": "git+ssh://root@nk021:/keep/joezone#*"
   },
   "files": [
-    "dbg"
+  	"bin",
+  	"dbg"
   ]
 }
