@@ -11,12 +11,12 @@ module.exports = class Main {
     }
     setup() {
         this.commands.set('template', 'builtin'), this.commands.set('copy', 'builtin'), 
-        this.commands.set('recurse', 'builtin');
+        this.commands.set('recurse', 'builtin'), this.commands.set('run', 'builtin');
     }
     execute() {
         process.argv.length <= 2 ? terminal.invalid('usage: prn scriptfile') : (this.instructionPfile = new Pfile(process.argv[2]), 
         this.instructionPfile.makeAbsolute(), this.instructionPfile.exists() ? (this.readInstructions(), 
-        this.processInstructions()) : terminal.invalid(yellow(instructionPfile.name), ' not found'));
+        this.processInstructions()) : terminal.invalid(yellow(this.instructionPfile.name), ' not found'));
     }
     readInstructions() {
         expect(this.instructionPfile, 'Pfile');
@@ -58,6 +58,10 @@ module.exports = class Main {
             this.processRecurseCommand(t);
             break;
 
+          case 'run':
+            this.processRunCommand(t);
+            break;
+
           default:
             terminal.logic('Unhandled builtin command ', blue(e));
         }
@@ -78,7 +82,7 @@ module.exports = class Main {
                 this.commands.set(i, n);
             } else {
                 if ('PragmaEntity' == r || 'GraynoteEntity' == r) continue;
-                terminal.logic('Unhandled entity type ', blue(r), ' in processTemplate');
+                terminal.logic('Unhandled entity type ', yellow(r), ' in processTemplateCommand');
             }
         }
     }
@@ -101,6 +105,21 @@ module.exports = class Main {
             this.beginRecursion(r, n, t);
         } else terminal.warning(blue('recurse '), yellow('<exec>'), ' specifies an undefined command ', red(r));
     }
+    processRunCommand(e) {
+        expect(e, 'GroupEntity');
+        for (let l = 0; l < e.children.length; l++) {
+            var t = e.children[l], r = t.entityType;
+            if ('StandardEntity' == r) {
+                var i = t.name, n = t.innerText;
+                if ('sh' != i) return void terminal.abnormal(blue('run'), ' items within this command should be preceeded by ', yellow(sh), ' ignoring ', red(i), ' ', red(n));
+                var a = n.split(' ');
+                this.executeChildProcess('run', a, null, null);
+            } else {
+                if ('PragmaEntity' == r || 'GraynoteEntity' == r) continue;
+                terminal.logic('Unhandled entity type ', yellow(r), ' in processRunCommand');
+            }
+        }
+    }
     beginRecursion(e, t, r) {
         expect(e, 'String'), expect(t, 'Array'), expect(r, 'Map'), expect(this.instructionPfile, 'Pfile');
         var i = this.instructionPfile.getPath(), n = new Pfile(i).addPath(r.get('source')), a = new Pfile(i).addPath(r.get('dest')), l = new Array();
@@ -118,43 +137,42 @@ module.exports = class Main {
             t.mkDir();
             var c = new Bunch(e.name, '*', Bunch.FILE + Bunch.DIRECTORY), o = c.find(!1);
             for (let c = 0; c < o.length; c++) {
-                var u = o[c], m = new Pfile(e).addPath(u), p = new Pfile(t).addPath(u);
-                this.recurseFileSystem(m, p, r, i, n, a, l, s);
+                var u = o[c], m = new Pfile(e).addPath(u), d = new Pfile(t).addPath(u);
+                this.recurseFileSystem(m, d, r, i, n, a, l, s);
             }
         } else if (e.isFile()) {
             if (!this.isIncluded(e, r, a)) return;
             if (this.isExcluded(e, r, l)) return;
             if (!this.allowOverwrite(e, t, s)) return void ('older' == s ? terminal.trace(blue(r), ' not overwriting because ', yellow(this.shortDisplayFilename(e.name)), blue(' older than / same as '), yellow(this.shortDisplayFilename(t.name))) : terminal.trace(blue(r), ' not overwriting because ', yellow(this.shortDisplayFilename(t.name)), blue(' already exists')));
-            var d = this.shortDisplayFilename(e.name), h = this.shortDisplayFilename(t.name);
+            var p = this.shortDisplayFilename(e.name), h = this.shortDisplayFilename(t.name);
             n.set('source', e.name), n.set('dest', t.name);
-            var g = this.replaceParamsWithValues(i, n);
-            this.executeChildProcess(r, g, d, h);
+            var y = this.replaceParamsWithValues(i, n);
+            this.executeChildProcess(r, y, p, h);
         } else terminal.warning(blue(r), ' ', e.name, red(' NOT FOUND'));
+    }
+    executeChildProcess(e, t, r, i) {
+        expect(e, 'String'), expect(t, 'Array'), expect(r, [ 'String', 'null' ]), expect(i, [ 'String', 'null' ]);
+        var n = t[0], a = (new Pfile(n), t.slice(1)), l = {
+            cwd: this.instructionPfile.getPath(),
+            stdio: [ 0, 1, 2 ]
+        };
+        try {
+            var s = '';
+            if (null == r && null == i) {
+                for (let e = 0; e < a.length; e++) s += ' ' + this.shortDisplayFilename(a[e]);
+                s = yellow(s);
+            } else s = ' ' + yellow(r) + ' --\x3e ' + yellow(i);
+            terminal.trace(blue(e), ' ', n, s), ChildProcess.spawnSync(n, a, l);
+        } catch (t) {
+            if (-1 != t.message.indexOf('spawnSync') && -1 != t.message.indexOf('ENOENT')) terminal.abnormal(blue(e), ' executable file not found ', blue(n)); else {
+                var c = t.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
+                terminal.abnormal(blue(e), c);
+            }
+        }
     }
     shortDisplayFilename(e) {
         var t = this.instructionPfile.getPath();
         return 0 == e.indexOf(t) ? e.substr(t.length + 1) : e;
-    }
-    executeChildProcess(e, t, r, i) {
-        expect(e, 'String'), expect(t, 'Array'), expect(r, [ 'String', 'null' ]), expect(i, [ 'String', 'null' ]);
-        var n = t[0], a = new Pfile(n);
-        if ('cp' == n || 'node' == n || a.exists()) {
-            var l = t.slice(1), s = {
-                cwd: this.instructionPfile.getPath(),
-                stdio: [ 0, 1, 2 ]
-            };
-            try {
-                var c = '';
-                if (null == r && null == i) {
-                    for (let e = 0; e < l.length; e++) c += ' ' + this.shortDisplayFilename(l[e]);
-                    c = yellow(c);
-                } else c = ' ' + yellow(r) + ' --\x3e ' + yellow(i);
-                terminal.trace(blue(e), ' ', n, c), ChildProcess.spawnSync(n, l, s);
-            } catch (t) {
-                var o = t.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
-                terminal.abnormal(blue(e), o);
-            }
-        } else terminal.invalid(blue(e), ' executable file not found ', blue(n));
     }
     isIncluded(e, t, r) {
         if (expect(e, 'Pfile'), expect(t, 'String'), expect(r, 'Array'), 0 == r.length) return !0;

@@ -7,13 +7,13 @@
   "private": true,
   "main": "./dist/main.class.js",
   "bin": {
-    "prn": "./bin/prn"
+    "prn": "./bin/prorenata"
   },
   "scripts": {
     "build": "npm run exim && npm run app",
     "exim": "node /musings/lib/exim/src/rewrite.js ./src ./dbg main.class.js",
-    "app": "node ./bin/prn ./test/build-appA.prn",
-    "app-inspect": "node --inspect-brk=9229 ./bin/fuse ./test/build-appA.prn",
+    "app": "node ./bin/prorenata ./test/build-appA.prn",
+    "app-inspect": "node --inspect-brk=9229 ./bin/prorenata ./test/build-appA.prn",
     "minify": "node /usr/lib/node_modules/uglify-es/bin/uglifyjs ./dbg/main.class.js --output ./dist/main.class.js --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8",
     "bump-version": "npm version patch && git push && git push --tags"
   },

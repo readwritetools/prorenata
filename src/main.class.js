@@ -44,6 +44,7 @@ export default class Main {
 		this.commands.set('template','builtin');
 		this.commands.set('copy',    'builtin');
 		this.commands.set('recurse', 'builtin');
+		this.commands.set('run',     'builtin');
 	}
 
 	// CLI entry point
@@ -59,7 +60,7 @@ export default class Main {
 		this.instructionPfile = new Pfile(process.argv[2]);
 		this.instructionPfile.makeAbsolute();
 		if (!this.instructionPfile.exists()) {
-			terminal.invalid(yellow(instructionPfile.name), ' not found');
+			terminal.invalid(yellow(this.instructionPfile.name), ' not found');
 			return;
 		}
 		
@@ -146,6 +147,10 @@ export default class Main {
 				this.processRecurseCommand(entity);
 				break;
 				
+			case 'run':
+				this.processRunCommand(entity);
+				break;
+				
 			default:
 				terminal.logic('Unhandled builtin command ', blue(cmdName));
 		}
@@ -185,7 +190,7 @@ export default class Main {
 			else if (type == 'PragmaEntity' || type == 'GraynoteEntity')
 				continue;
 			else
-				terminal.logic('Unhandled entity type ', blue(type), ' in processTemplate');
+				terminal.logic('Unhandled entity type ', yellow(type), ' in processTemplateCommand');
 		}
 	}
 	
@@ -226,6 +231,38 @@ export default class Main {
 
 		this.beginRecursion(cmdName, processArgs, paramMap);
 	}
+
+	//^ The 'run' command
+	//  The only recognized child is 'sh' 
+	processRunCommand(runEntity) {
+		expect(runEntity, 'GroupEntity');
+
+		for (let i=0; i < runEntity.children.length; i++) {
+			var childEntity = runEntity.children[i];
+			var type = childEntity.entityType;
+
+			if ( type == 'StandardEntity') {
+				var shKeyword = childEntity.name;
+				var shCommand = childEntity.innerText;
+				if (shKeyword != 'sh') {
+					terminal.abnormal(blue('run'), ' items within this command should be preceeded by ', yellow(sh), ' ignoring ', red(shKeyword), ' ',  red(shCommand) );
+					return;
+				}
+				else {
+					var commandArgs = shCommand.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
+					this.executeChildProcess('run', commandArgs, null, null);
+				}
+			}
+			else if (type == 'PragmaEntity' || type == 'GraynoteEntity')
+				continue;
+			else
+				terminal.logic('Unhandled entity type ', yellow(type), ' in processRunCommand');
+		}
+	}
+	
+	//-------------------------------------------------------------------------
+	// recursion
+	//-------------------------------------------------------------------------
 
 	//> cmdName is either 'copy', or the <exec> param of a 'recurse' command
 	//> processArgs is an array where [0] is the executable, and [1]..[N] are the arguments
@@ -328,18 +365,10 @@ export default class Main {
 			terminal.warning(blue(cmdName), ' ', source.name, red(' NOT FOUND'));
 	}
 	
-	//^ For terminal messages, it is desirable to shorten the filenames by removing the common leading path portion
-	//> fullyQualifiedFilename
-	//< shorter name
-	shortDisplayFilename(fullyQualifiedFilename) {
-		var leadingPart = this.instructionPfile.getPath();
-		if (fullyQualifiedFilename.indexOf(leadingPart) == 0) {
-			return fullyQualifiedFilename.substr(leadingPart.length + 1);
-		}
-		else
-			return fullyQualifiedFilename;
-	}
-	
+	//-------------------------------------------------------------------------
+	// child process
+	//-------------------------------------------------------------------------
+
 	//> cmdName is for console feedback only
 	//> finalArgs[0] is the executable filename, finalArgs[1]...[N] are the arguments
 	//> shortSource is a shortened version of the source filename, for use in terminal logging
@@ -352,10 +381,12 @@ export default class Main {
 
 		var exeFile = finalArgs[0];
 		var exePfile = new Pfile(exeFile);
+		/*
 		if (exeFile != 'cp' && exeFile != 'node' && !exePfile.exists()) {						// <-- Hmm
 			terminal.invalid(blue(cmdName), ' executable file not found ', blue(exeFile));
 			return;
 		}
+		*/
 		
 		var args = finalArgs.slice(1);
 		var options = {
@@ -381,16 +412,35 @@ export default class Main {
 			ChildProcess.spawnSync(exeFile, args, options);
 		}
 		catch(err) {
-			var message = err.message
-				.replace('spawnSync', "Couldn't start")
-				.replace('ENOENT', '(No such file or directory)');
-			terminal.abnormal(blue(cmdName), message);
+			
+			if (err.message.indexOf('spawnSync') != -1 && err.message.indexOf('ENOENT') != -1) {
+				terminal.abnormal(blue(cmdName), ' executable file not found ', blue(exeFile));
+			}
+			else {
+	
+				var message = err.message
+					.replace('spawnSync', "Couldn't start")
+					.replace('ENOENT', '(No such file or directory)');
+				terminal.abnormal(blue(cmdName), message);
+			}
 		}
 	}
 	
 	//-------------------------------------------------------------------------
 	// helpers
 	//-------------------------------------------------------------------------
+	
+	//^ For terminal messages, it is desirable to shorten the filenames by removing the common leading path portion
+	//> fullyQualifiedFilename
+	//< shorter name
+	shortDisplayFilename(fullyQualifiedFilename) {
+		var leadingPart = this.instructionPfile.getPath();
+		if (fullyQualifiedFilename.indexOf(leadingPart) == 0) {
+			return fullyQualifiedFilename.substr(leadingPart.length + 1);
+		}
+		else
+			return fullyQualifiedFilename;
+	}
 	
 	//< return true if the trailing part of the path matches one of the patterns to include
 	//< also returns true if there are no patterns.
