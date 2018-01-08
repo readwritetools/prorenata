@@ -7,11 +7,19 @@ template {
 	uglify       node C:/Users/Propellerhead/AppData/Roaming/npm/node_modules/uglify-es/bin/uglifyjs <source> --output <dest> --ecma 8 --compress		/* npm install uglify-es -g */
 }
 
+/*
+TODO list all files in <dest> that are not in <source>
+cruft {
+	source 
+	dest
+	remove    true | false†
+}
+*/
 // ---------- merge appA proto --> appA fused ---------- 
 copy {
 	source    appA/proto
 	dest      appA/fused
-	overwrite older				// older† | always | never
+	overwrite older				// older | always | never†
 	// onfailure halt			// halt | continue†
 	// quiet true				// true | false†
 	// mkdir true				// true† | false
@@ -21,6 +29,9 @@ copy {
 copy {
 	source    appSuite/proto
 	dest      appA/fused
+	include   '*.blue'
+	include   '*.html'
+	include   '*.png'
 	exclude   appSuite/proto/js		// copy this directory using bifucate
 	overwrite older
 }

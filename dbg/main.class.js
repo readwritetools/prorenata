@@ -1,17 +1,18 @@
 //=============================================================================
 //
-// File:         fuse/src/main.class.js
+// File:         prorenate/src/main.class.js
 // Language:     ECMAScript 2015
 // Copyright:    Joe Honton © 2017
 // License:      CC-BY-NC-ND 4.0
 // Initial date: Dec 31, 2017
-// Usage:        fuse instructionfile
+// Usage:        prn scriptfile
 //
 //=============================================================================
 
 var expect = require('joezone').expect;
 var Pfile = require('joezone').Pfile;
 var Bunch = require('joezone').Bunch;
+var terminal = require('joezone').terminal;
 var FileInterface = require('bluephrase').FileInterface;
 var RootEntity = require('bluephrase').RootEntity;
 var EntityPath = require('bluephrase').EntityPath;
@@ -19,27 +20,12 @@ var TT = require('bluephrase').TT;
 var fs = require('fs');
 var ChildProcess = require('child_process');
 
-const gray    = '\x1b[90m';
-const red     = '\x1b[91m';
-const green   = '\x1b[92m';
-const yellow  = '\x1b[93m';
-const blue    = '\x1b[94m';
-const nocolor = '\x1b[0m';
-
-class log {
-	static trace(msg) {
-		process.stderr.write(`${gray}   [TRACE] ${nocolor}${msg}\n`);
-	}
-	static warning(msg) {
-		process.stderr.write(`${gray} [WARNING] ${nocolor}${msg}\n`);
-	}
-	static abnormal(msg) {
-		process.stderr.write(`${red}[ABNORMAL] ${nocolor}${msg}\n`);
-	}
-	static logic(msg) {
-		process.stderr.write(`${red}   [LOGIC] ${nocolor}${msg}\n`);
-	}
-}
+terminal.setProcessName('[prn]');
+var gray = terminal.gray;
+var red = terminal.red;
+var green = terminal.green;
+var yellow = terminal.yellow;
+var blue = terminal.blue;
 
 
 module.exports = class Main {
@@ -55,7 +41,7 @@ module.exports = class Main {
 
 	// define the builtin commands
 	setup() {
-		this.commands.set('template',  'builtin');
+		this.commands.set('template','builtin');
 		this.commands.set('copy',    'builtin');
 		this.commands.set('recurse', 'builtin');
 	}
@@ -66,14 +52,14 @@ module.exports = class Main {
 		// argv[1] main.js
 		// argv[2] instructionfile
 		if (process.argv.length <= 2) {
-			process.stderr.write("usage: fuse instructionfile");
+			terminal.invalid('usage: prn scriptfile');
 			return;
 		}
 
 		this.instructionPfile = new Pfile(process.argv[2]);
 		this.instructionPfile.makeAbsolute();
 		if (!this.instructionPfile.exists()) {
-			process.stderr.write(`${instructionPfile.name} not found`);
+			terminal.invalid(yellow(instructionPfile.name), ' not found');
 			return;
 		}
 		
@@ -106,14 +92,14 @@ module.exports = class Main {
 			
 			else if (type == 'GraynoteEntity') {
 				if (entity.tokenType == TT.GRAYNOTE_COMMENT)
-					log.trace(`${gray}${entity.value.trim()}${nocolor}`);
+					terminal.trace(gray(entity.value.trim()));
 			}
 			
 			else if (type == 'PragmaEntity')
 				continue;
 			
 			else
-				log.logic(`Unhandled entityType ${entity.entityType}`);
+				terminal.logic('Unhandled entityType ', blue(entity.entityType));
 		}
 	}
 	
@@ -130,7 +116,7 @@ module.exports = class Main {
 		var cmd = entity.name;
 		
 		if (!this.commands.has(cmd)) {
-			log.warning(`The command '${cmd}' has not been defined.`);
+			terminal.warning('The command ', blue(cmd), ' has not been defined');
 			return;
 		}
 		
@@ -161,7 +147,7 @@ module.exports = class Main {
 				break;
 				
 			default:
-				log.logic(`Unhandled builtin command '${cmdName}'`);
+				terminal.logic('Unhandled builtin command ', blue(cmdName));
 		}
 	}
 	
@@ -175,9 +161,7 @@ module.exports = class Main {
 		
 		var processArgs = cmdTemplate.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
 		var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
-		this.executeChildProcess(cmdName, finalArgs);
-		
-		//log.trace(`${blue}${cmd}${nocolor} ${yellow}${cmdFrozen}${nocolor}`);
+		this.executeChildProcess(cmdName, finalArgs, null, null);
 	}
 	
 	//-------------------------------------------------------------------------
@@ -201,7 +185,7 @@ module.exports = class Main {
 			else if (type == 'PragmaEntity' || type == 'GraynoteEntity')
 				continue;
 			else
-				log.logic(`Unhandled entity type '${type}' in processTemplate`);
+				terminal.logic('Unhandled entity type ', blue(type), ' in processTemplate');
 		}
 	}
 	
@@ -232,7 +216,7 @@ module.exports = class Main {
 		// The cmdTemplate for 'recurse' command is the value pointed to by the 'exec' param
 		var cmdName = paramMap.get('exec').trim();
 		if (!this.commands.has(cmdName)) {
-			log.warning(`${blue}recurse${nocolor} ${red}<exec>${nocolor} specifies an undefined command ${red}${cmdName}${nocolor}`);
+			terminal.warning(blue('recurse '), yellow('<exec>'), ' specifies an undefined command ', red(cmdName));
 			return;
 		}
 		var cmdTemplate = this.commands.get(cmdName);
@@ -325,42 +309,82 @@ module.exports = class Main {
 
 			if (!this.allowOverwrite(source, dest, overwriteRule)) {
 				if (overwriteRule == 'older')
-					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${source.name} ${blue}older than / same as${nocolor} ${dest.name}`);
+					terminal.trace(blue(cmdName), ' not overwriting because ', yellow(this.shortDisplayFilename(source.name)), blue(' older than / same as '), yellow(this.shortDisplayFilename(dest.name)));
 				else // if (overwriteRule == 'never')
-					log.trace(`${blue}${cmdName}${nocolor} not overwriting because ${dest.name} ${blue}already exists${nocolor}`);
+					terminal.trace(blue(cmdName), ' not overwriting because ', yellow(this.shortDisplayFilename(dest.name)), blue(' already exists'));
 				return;
 			}
+			
+			// prepare two short names for use with short terminal logging:
+			var shortSource = this.shortDisplayFilename(source.name);
+			var shortDest = this.shortDisplayFilename(dest.name);
 			
 			paramMap.set('source', source.name);
 			paramMap.set('dest', dest.name);
 			var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
-			this.executeChildProcess(cmdName, finalArgs);
+			this.executeChildProcess(cmdName, finalArgs, shortSource, shortDest);
 		}
 		else
-			log.warning(`${blue}${cmdName}${nocolor} ${source.name} ${red}NOT FOUND${nocolor}`);
+			terminal.warning(blue(cmdName), ' ', source.name, red(' NOT FOUND'));
+	}
+	
+	//^ For terminal messages, it is desirable to shorten the filenames by removing the common leading path portion
+	//> fullyQualifiedFilename
+	//< shorter name
+	shortDisplayFilename(fullyQualifiedFilename) {
+		var leadingPart = this.instructionPfile.getPath();
+		if (fullyQualifiedFilename.indexOf(leadingPart) == 0) {
+			return fullyQualifiedFilename.substr(leadingPart.length + 1);
+		}
+		else
+			return fullyQualifiedFilename;
 	}
 	
 	//> cmdName is for console feedback only
 	//> finalArgs[0] is the executable filename, finalArgs[1]...[N] are the arguments
-	executeChildProcess(cmdName, finalArgs) {
+	//> shortSource is a shortened version of the source filename, for use in terminal logging
+	//> shortDest is a shortened version of the dest filename, for use in terminal logging
+	executeChildProcess(cmdName, finalArgs, shortSource, shortDest) {
 		expect(cmdName, 'String');
 		expect(finalArgs, 'Array');
+		expect(shortSource, ['String', 'null']);
+		expect(shortDest, ['String', 'null']);
 
 		var exeFile = finalArgs[0];
+		var exePfile = new Pfile(exeFile);
+		if (exeFile != 'cp' && exeFile != 'node' && !exePfile.exists()) {						// <-- Hmm
+			terminal.invalid(blue(cmdName), ' executable file not found ', blue(exeFile));
+			return;
+		}
+		
 		var args = finalArgs.slice(1);
 		var options = {
-			cwd: this.instructionPfile.getPath()
+			cwd: this.instructionPfile.getPath(),
+			stdio: [0,1,2]
 		};
 		
 		try {
-			log.trace(`${blue}${cmdName}${nocolor} ${yellow}${finalArgs.join(' ')}${nocolor}`);
-			ChildProcess.execFileSync(exeFile, args, options);
+			var formattedArgs = '';
+			if (shortSource == null && shortDest == null) {
+				for (let i=0; i < args.length; i++)
+					formattedArgs += ' ' + this.shortDisplayFilename(args[i]);
+				formattedArgs = yellow(formattedArgs);
+			}
+			else {
+				formattedArgs = ' ' + yellow(shortSource) + ' --> ' + yellow(shortDest);
+			}
+			
+			terminal.trace(blue(cmdName), ' ', exeFile, formattedArgs);
+			
+			
+//.			ChildProcess.execFileSync(exeFile, args, options);
+			ChildProcess.spawnSync(exeFile, args, options);
 		}
 		catch(err) {
 			var message = err.message
 				.replace('spawnSync', "Couldn't start")
 				.replace('ENOENT', '(No such file or directory)');
-			log.abnormal(`${blue}${cmdName}${nocolor} ${message}`);
+			terminal.abnormal(blue(cmdName), message);
 		}
 	}
 	
@@ -397,7 +421,7 @@ module.exports = class Main {
 				return true;
 		}
 		var joinedPatterns = includePatterns.join(', ');
-		log.trace(`${blue}${cmdName}${nocolor} including ${blue}${joinedPatterns}${nocolor} does not match ${filename}`);
+		terminal.trace(blue(cmdName), ' not including ', yellow(this.shortDisplayFilename(filename)), ' because it does not match ', blue(joinedPatterns));
 		return false;
 	}
 	
@@ -423,7 +447,7 @@ module.exports = class Main {
 			// does this user's pattern match the trailing portion of the user's path?
 			var rx = new RegExp(pattern + '$');
 			if (rx.test(filename)) {
-				log.trace(`${blue}${cmdName}${nocolor} excluding ${filename} by request ${blue}${excludePatterns[i]}${nocolor}`);
+				terminal.trace(blue(cmdName), ' excluding ', yellow(this.shortDisplayFilename(filename)), ' by request ', blue(excludePatterns[i]));
 				return true;
 			}
 		}
@@ -453,7 +477,7 @@ module.exports = class Main {
 				return (fs.statSync(dest.name).mtime < fs.statSync(source.name).mtime);
 		}
 		else {
-			log.logic(`Unhandled overwriteRule ${overwriteRule}`);
+			terminal.logic('Unhandled overwriteRule ', red(overwriteRule));
 			return false;
 		}
 	}
@@ -486,25 +510,25 @@ module.exports = class Main {
 					var problematicValue = attrPairs[j][1];
 						
 					if (key == 'class')
-						log.warning(`${blue}${cmd}${nocolor} parameter values beginning with FULL-STOP must be quoted ${red}.${problematicValue}${nocolor}`);
+						terminal.warning(blue(cmd), ' parameter values beginning with FULL-STOP must be quoted ', red(problematicValue));
 					else if (key == 'id')
-						log.warning(`${blue}${cmd}${nocolor} parameter values beginning with HASHTAG must be quoted ${red}#${problematicValue}${nocolor}`);
+						terminal.warning(blue(cmd), ' parameter values beginning with HASHTAG must be quoted #', red(problematicValue));
 					else if (key == 'style')
-						log.warning(`${blue}${cmd}${nocolor} parameter values beginning with CIRCUMFLEX must be quoted ${red}^${problematicValue}${nocolor}`);
+						terminal.warning(blue(cmd), ' parameter values beginning with CIRCUMFLEX must be quoted ^', red(problematicValue));
 					else if (key == 'role')
-						log.warning(`${blue}${cmd}${nocolor} parameter values beginning with PLUS-SIGN must be quoted ${red}+${problematicValue}${nocolor}`);
+						terminal.warning(blue(cmd), ' parameter values beginning with PLUS-SIGN must be quoted +', red(problematicValue));
 					else if (key == 'property')
-						log.warning(`${blue}${cmd}${nocolor} parameter values beginning with QUESTION-MARK must be quoted ${red}?${problematicValue}${nocolor}`);
+						terminal.warning(blue(cmd), ' parameter values beginning with QUESTION-MARK must be quoted ?', red(problematicValue));
 					else if (key == 'data-junctor')
-						log.warning(`${blue}${cmd}${nocolor} parameter values beginning with TILDE must be quoted ${red}~${problematicValue}${nocolor}`);
+						terminal.warning(blue(cmd), ' parameter values beginning with TILDE must be quoted ~', red(problematicValue));
 					else if (key == 'sourceref' || key == 'href' || key == 'src' || key == 'data' || key == 'action' || key == 'cite') {
 						const grave = '\u{0060}';
-						log.warning(`${blue}${cmd}${nocolor} parameter values beginning with GRAVE-ACCENT must be quoted ${red}${grave}${problematicValue}${grave}${nocolor}`);
+						terminal.warning(blue(cmd), ' parameter values beginning with GRAVE-ACCENT must be quoted ', red(`${grave}${problematicValue}${grave}`));
 					}
 					else {
 						if (problematicValue == null)
 							problematicValue = key;
-						log.warning(`${blue}${cmd}${nocolor} parameter values beginning with ASTERISK must be quoted ${red}*${problematicValue}${nocolor}`);
+						terminal.warning(blue(cmd), ' parameter values beginning with ASTERISK must be quoted *', red(problematicValue));
 					}
 				}
 			}
@@ -526,7 +550,7 @@ module.exports = class Main {
 				// verify the value provided with 'overwrite'
 				else if (paramName == 'overwrite') {
 					if (paramValue != 'older' && paramValue != 'always' && paramValue != 'never') {
-						log.warning(`${blue}${cmd}${nocolor} the <overwrite> parameter is ${red}${paramValue}${nocolor}, only ${blue}always | older | never${nocolor} are meaningful`);
+						terminal.warning(blue(cmd), ' the <overwrite> parameter is ', red(paramValue), ' only ', blue('always | older | never'), ' are meaningful');
 					}
 					paramMap.set(paramName, paramValue);
 				}
@@ -535,7 +559,7 @@ module.exports = class Main {
 				}
 			}
 			else
-				log.logic(`Unhandled entity type '${type}' in buildParameterMap`);
+				terminal.logic('Unhandled entity type ', yellow(type), ' in buildParameterMap');
 		}
 		return paramMap;
 	}
@@ -555,7 +579,7 @@ module.exports = class Main {
 		for (let [paramName, paramValue] of paramMap.entries()) {
 			var prefixedName = `<${paramName}>`;
 			if (cmdTemplate.indexOf(prefixedName) == -1)
-				log.warning(`${blue}${cmd}${nocolor} does not use the parameter ${red}<${paramName}>${nocolor}, ignorning ${red}${paramValue}${nocolor}`);
+				terminal.warning(blue(cmd), ' does not use the parameter ', red(`<${paramName}>`), ' ignorning ', red(paramValue));
 		}
 		
 		// are there any parameters in the template that are not provided by the user
@@ -564,7 +588,7 @@ module.exports = class Main {
 			for (let i=0; i < matches.length; i++) {
 				var expectedParam = matches[i].substr(1, matches[i].length-2);
 				if (!paramMap.has(expectedParam)) {
-					log.warning(`${blue}${cmd}${nocolor} expects a parameter named ${red}<${expectedParam}>${nocolor}`);
+					terminal.warning(blue(cmd), ' expects a parameter named ', red(`<${expectedParam}>`));
 				}
 			}
 		}
@@ -586,18 +610,18 @@ module.exports = class Main {
 			var optionalParams = ['dest', 'include', 'exclude', 'overwrite', 'onfailure'];
 		}
 		else
-			log.logic(`Unexpected cmd ${cmd}`);
+			terminal.logic('Unexpected cmd ', red(cmd));
 		
 		// are there any parameters specified by the user, but not required or optional
 		for (let [paramName, paramValue] of paramMap.entries()) {
 			if (!requiredParams.includes(paramName) && !optionalParams.includes(paramName))
-				log.warning(`${blue}${cmd}${nocolor} does not use the parameter ${red}<${paramName}>${nocolor}, ignorning ${red}${paramValue}${nocolor}`);
+				terminal.warning(blue(cmd), ' does not use the parameter ', red(`<${paramName}>`), ', ignorning ', red(paramValue));
 		}
 		
 		// are there any required parameters that are not provided by the user
 		for (let i=0; i < requiredParams.length; i++) {
 			if (!paramMap.has(requiredParams[i])) {
-				log.warning(`${blue}${cmd}${nocolor} expects a parameter named ${red}<${requiredParams[i]}>${nocolor}`);
+				terminal.warning(blue(cmd), ' expects a parameter named ', red(`<${requiredParams[i]}>`));
 			}
 		}
 	}
@@ -641,6 +665,3 @@ module.exports = class Main {
 			return str;
 	}
 }
-
-//var main = new Main();
-//main.execute();
