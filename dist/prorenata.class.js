@@ -4,7 +4,7 @@ terminal.setProcessName('[prn]');
 
 var gray = terminal.gray, red = terminal.red, green = terminal.green, yellow = terminal.yellow, blue = terminal.blue;
 
-module.exports = class Main {
+module.exports = class Prorenata {
     constructor() {
         this.instructionPfile = null, this.root = null, this.commands = new Map(), this.privateJoinChar = '|', 
         this.setup(), Object.seal(this);
@@ -172,7 +172,15 @@ module.exports = class Main {
     }
     shortDisplayFilename(e) {
         var t = this.instructionPfile.getPath();
-        return 0 == e.indexOf(t) ? e.substr(t.length + 1) : e;
+        if (0 == e.indexOf(t)) return e.substr(t.length + 1);
+        for (;-1 != t.indexOf('/'); ) {
+            var r = t.split('/');
+            if (r.pop(), t = r.join('/'), 0 == e.indexOf(t)) {
+                var i = e.substr(t.length);
+                return '/' == i.charAt(0) ? i.substr(1) : i;
+            }
+        }
+        return e;
     }
     isIncluded(e, t, r) {
         if (expect(e, 'Pfile'), expect(t, 'String'), expect(r, 'Array'), 0 == r.length) return !0;

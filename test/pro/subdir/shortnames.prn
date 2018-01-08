@@ -1,0 +1,6 @@
+// ---------- merge appA proto --> appA fused ---------- 
+copy {
+	source    '../../appA/proto'
+	dest      '../../appA/fused'
+	overwrite older				// older | always | never†
+}

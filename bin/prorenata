@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-var Main = require('../dist/main.class.js');
-var main = new Main();
-main.execute();
+var Prorenata = require('../dist/prorenata.class.js');
+var prorenata = new Prorenata();
+prorenata.execute();

@@ -67,12 +67,3 @@ recurse {
 	overwrite older
 	exec      uglify
 }
-
-//
-//  ---------- run a sequence of commands ---------- 
-run {
-	sh ls -lia
-	sh cd ../
-	sh ls -lia
-}
-
