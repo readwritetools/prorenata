@@ -1,0 +1,23 @@
+!blue 2.0
+//=============================================================================
+//
+// File:         prorenata/pro/compile
+// Language:     prorenata script
+// Copyright:    Joe Honton © 2018
+// License:      CC-BY-NC-ND 4.0
+// Initial date: Jan 8, 2018
+// Contents:     Convert ES6 import/export syntax to require/module syntax
+//
+//=============================================================================
+
+template {
+	exim 		 node /musings/lib/exim/src/rewrite.js <source> <dest> <rootfile>
+}
+
+// ---------- rewrite export/import (src) ---------- 
+exim {
+	source    '../src'
+	dest      '../dbg'
+	rootfile  main.js
+	//overwrite older					// this will only become effective when exim becomes eximf
+}

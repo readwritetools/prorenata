@@ -1,0 +1,17 @@
+!blue 2.0
+//=============================================================================
+//
+// File:         bluephrase/pro/installg
+// Language:     prorenata script
+// Copyright:    Joe Honton © 2018
+// License:      CC-BY-NC-ND 4.0
+// Initial date: Jan 8, 2018
+// Contents:     Make this app globally available via a shell command
+//
+//=============================================================================
+
+// ---------- install app to user's path ---------- 
+run {
+	sh npm -g bin   // show target destination
+	sh npm install -g git+ssh://root@nk021:/keep/prorenata
+}

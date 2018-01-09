@@ -398,7 +398,7 @@ export default class Prorenata {
 			else {
 				formattedArgs = ' ' + yellow(shortSource) + ' --> ' + yellow(shortDest);
 			}
-			
+
 			terminal.trace(blue(cmdName), ' ', exeFile, formattedArgs);
 						
 //.			ChildProcess.execFileSync(exeFile, args, options);

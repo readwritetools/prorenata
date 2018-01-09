@@ -1,0 +1,20 @@
+!blue 2.0
+//=============================================================================
+//
+// File:         prorenata/pro/test
+// Language:     prorenata script
+// Copyright:    Joe Honton © 2018
+// License:      CC-BY-NC-ND 4.0
+// Initial date: Jan 8, 2018
+// Contents:     Run prorenata directly from dbg directory
+//
+//=============================================================================
+
+//
+// ---------- run self tests ---------- 
+run {
+	sh node ../dbg/main.js ../test/build-appA.prn
+	sh node ../dbg/main.js ../test/run.prn
+	sh node ../dbg/main.js ../test/pro/shortnames.prn
+	sh node ../dbg/main.js ../test/pro/subdir/shortnames.prn
+}

@@ -1,0 +1,33 @@
+!blue 2.0
+//=============================================================================
+//
+// File:         prorenata/pro/deploy
+// Language:     prorenata script
+// Copyright:    Joe Honton © 2018
+// License:      CC-BY-NC-ND 4.0
+// Initial date: Jan 8, 2018
+// Contents:     Minify, bump version, push repo
+//
+//=============================================================================
+
+template {
+	minify     node /usr/lib/node_modules/uglify-es/bin/uglifyjs <source> --output <dest> --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8 		/* npm install -g uglify-es */
+}
+
+//
+// ---------- remove comments and whitespace ---------- 
+recurse {
+	source    '../dbg'
+	dest      '../dist'
+	overwrite older
+	exec      minify
+}
+
+// ---------- bump version and push repo to origin ---------- 
+run {
+	sh git add ../dist/.
+	sh git commit -m minify
+	sh npm version patch
+	sh git push
+	sh git push --tags
+}
