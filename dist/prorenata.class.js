@@ -15,34 +15,9 @@ module.exports = class Prorenata {
         this.commands.set('run', 'builtin');
     }
     execute() {
-        if (process.argv.length <= 2) return process.stdout.write('usage: prn scriptfile\n'), 
-        process.stdout.write('       prn --version\n'), void process.stdout.write('       prn --help\n');
-        if ('--version' != process.argv[2]) if ('--help' != process.argv[2]) this.instructionPfile = new Pfile(process.argv[2]), 
+        process.argv.length <= 2 || (this.instructionPfile = new Pfile(process.argv[2]), 
         this.instructionPfile.makeAbsolute(), this.instructionPfile.exists() ? (this.readInstructions(), 
-        this.processInstructions()) : process.stdout.write(green(this.instructionPfile.name), ' not found\n'); else {
-            var e = new Array();
-            e.push(''), e.push('Script files contain commands in this form:'), e.push(''), e.push('command {'), 
-            e.push('   parameter value'), e.push('}'), e.push(''), e.push('commands := template | copy | recurse | compare | run'), 
-            e.push('   \'template\'  defines new commands for use with the <exec> parameter of \'recurse\''), 
-            e.push('   \'copy\'      recursively copies all files in <source> to <dest>'), e.push('   \'recurse\'   runs a template-defined command recursively over all files in <source>'), 
-            e.push('   \'compare\'   lists files that are in <source> but not in <dest>'), e.push('   \'run\'       executes an arbitrary shell command'), 
-            e.push(''), e.push('parameters := source | dest | include | exclude | extension | exec | overwrite | mkdir | progress'), 
-            e.push('   <source>    an absolute or relative path'), e.push('   <dest>      an absolute or relative path'), 
-            e.push('   <include>   a file pattern to include, if omitted defaults to \'*\''), 
-            e.push('   <exclude>   a file pattern to exclude'), e.push('   <extension> the filename extension to apply to destination filenames'), 
-            e.push('   <exec>      a command name defined in the \'template\' section'), e.push('   <overwrite> := always | older | never'), 
-            e.push('   <mkdir>     := true | false'), e.push('   <progress>  := verbose | regular | none'), 
-            e.push('   <sh>        a shell command to execute; used with the \'run\' command'), 
-            e.push(''), e.push('Sample script to copy *.html from \'foo\' to \'bar\''), e.push(''), 
-            e.push('copy {'), e.push('   source  foo'), e.push('   dest    bar'), e.push('   include \'*.html\''), 
-            e.push('}'), e.push(''), e.push('Sample script to recursively compile LESS into CSS from \'foo\' to \'bar\''), 
-            e.push('template {'), e.push('   LESS lessc <source> <dest>'), e.push('}'), e.push('recurse {'), 
-            e.push('   source    foo'), e.push('   dest      bar'), e.push('   include   \'*.less\''), 
-            e.push('   extension \'.css\''), e.push('   exec      LESS'), e.push('}'), e.push(''), 
-            e.push('');
-            var r = e.join('\n');
-            process.stdout.write(r);
-        } else process.stdout.write('prorenata version 1.0\n');
+        this.processInstructions()) : terminal.writeToConsoleOrStderr(green(this.instructionPfile.name) + ' not found'));
     }
     readInstructions() {
         expect(this.instructionPfile, 'Pfile');
@@ -101,16 +76,16 @@ module.exports = class Prorenata {
         expect(e, 'String'), expect(r, 'String'), expect(t, [ 'GroupEntity', 'StandardEntity' ]);
         var i = this.buildParameterMap(e, t);
         this.verifyUserParams(e, i);
-        var s = r.split(' '), n = this.replaceParamsWithValues(s, i), a = i.get('source'), l = i.get('dest'), o = this.formatProgressMsg(e, a, l, n, 'shortForm');
-        this.executeChildProcess(e, n, o, i);
+        var n = r.split(' '), a = this.replaceParamsWithValues(n, i), s = i.get('source'), l = i.get('dest'), o = this.formatProgressMsg(e, s, l, a, 'shortForm');
+        this.executeChildProcess(e, a, o, i);
     }
     processTemplateCommand(e) {
         expect(e, 'GroupEntity');
-        for (let n = 0; n < e.children.length; n++) {
-            var r = e.children[n], t = r.entityType;
+        for (let a = 0; a < e.children.length; a++) {
+            var r = e.children[a], t = r.entityType;
             if ('StandardEntity' == t) {
-                var i = r.name, s = r.innerText;
-                this.commands.set(i, s);
+                var i = r.name, n = r.innerText;
+                this.commands.set(i, n);
             } else {
                 if ('PragmaEntity' == t || 'GraynoteEntity' == t) continue;
                 terminal.logic('Unhandled entity type ', green(t), ' in processTemplateCommand');
@@ -132,8 +107,8 @@ module.exports = class Prorenata {
         if (this.commands.has(t)) {
             var i = this.commands.get(t);
             expect(i, 'String');
-            var s = i.split(' ');
-            this.beginRecursion(t, s, r);
+            var n = i.split(' ');
+            this.beginRecursion(t, n, r);
         } else terminal.warning(blue('recurse '), green('<exec>'), ' specifies an undefined command ', red(t));
     }
     processCompareCommand(e) {
@@ -151,11 +126,11 @@ module.exports = class Prorenata {
             var t = e.children[o], i = t.entityType;
             if (1 == this.halt) return;
             if ('StandardEntity' == i) {
-                var s = t.name, n = t.innerText;
-                if ('progress' == s) return;
-                if ('sh' != s) return void terminal.invalid(blue('run'), ' items within this command should be preceeded by ', green('sh'), ' ignoring ', red(s), ' ', red(n));
-                var a = n.split(' '), l = this.formatProgressMsg('run', null, null, a, 'argsForm');
-                this.executeChildProcess('run', a, l, r);
+                var n = t.name, a = t.innerText;
+                if ('progress' == n) return;
+                if ('sh' != n) return void terminal.invalid(blue('run'), ' items within this command should be preceeded by ', green('sh'), ' ignoring ', red(n), ' ', red(a));
+                var s = a.split(' '), l = this.formatProgressMsg('run', null, null, s, 'argsForm');
+                this.executeChildProcess('run', s, l, r);
             } else {
                 if ('PragmaEntity' == i || 'GraynoteEntity' == i) continue;
                 terminal.logic('Unhandled entity type ', green(i), ' in processRunCommand');
@@ -166,56 +141,56 @@ module.exports = class Prorenata {
         expect(e, 'String'), expect(r, 'Array'), expect(t, 'Map'), expect(this.instructionPfile, 'Pfile');
         var i = this.instructionPfile.getPath();
         if (t.has('source')) {
-            var s = new Pfile(t.get('source'));
-            if (s.isAbsolutePath() || (s = new Pfile(i).addPath(t.get('source'))), t.has('dest')) {
-                (n = new Pfile(t.get('dest'))).isAbsolutePath() || (n = new Pfile(i).addPath(t.get('dest')));
-            } else var n = null;
-            var a = new Array();
-            t.has('include') && (a = t.get('include').split(this.privateJoinChar), expect(a, 'Array'));
+            var n = new Pfile(t.get('source'));
+            if (n.isAbsolutePath() || (n = new Pfile(i).addPath(t.get('source'))), t.has('dest')) {
+                (a = new Pfile(t.get('dest'))).isAbsolutePath() || (a = new Pfile(i).addPath(t.get('dest')));
+            } else var a = null;
+            var s = new Array();
+            t.has('include') && (s = t.get('include').split(this.privateJoinChar), expect(s, 'Array'));
             var l = new Array();
             t.has('exclude') && (l = t.get('exclude').split(this.privateJoinChar), expect(l, 'Array'));
             var o = 'never';
             t.has('overwrite') && 'always' != (o = t.get('overwrite')) && 'older' != o && 'never' != o && (o = 'never');
-            var u = 'compare' == e ? 'false' : 'true';
-            t.has('mkdir') && 'true' != (u = t.get('mkdir')) && 'false' != u && (u = 'false'), 
+            var c = 'compare' == e ? 'false' : 'true';
+            t.has('mkdir') && 'true' != (c = t.get('mkdir')) && 'false' != c && (c = 'false'), 
             t.delete('exec'), t.delete('include'), t.delete('exclude'), t.delete('overwrite'), 
             t.delete('mkdir');
-            this.recurseFileSystem(s, n, e, r, t, a, l, o, u, 0);
+            this.recurseFileSystem(n, a, e, r, t, s, l, o, c, 0);
         } else terminal.abnormal(blue(e), ' no ', red('<source>'), ' parameter provided, can not continue');
     }
-    recurseFileSystem(e, r, t, i, s, n, a, l, o, u) {
+    recurseFileSystem(e, r, t, i, n, a, s, l, o, c) {
         if (expect(e, 'Pfile'), expect(r, [ 'Pfile', 'null' ]), expect(t, 'String'), expect(i, 'Array'), 
-        expect(s, 'Map'), expect(n, 'Array'), expect(a, 'Array'), expect(l, 'String'), expect(o, 'String'), 
-        expect(u, 'Number'), 1 != this.halt) if (u > 10) terminal.abnormal(blue(t), ' halting recursion at ', green(r.name), ' which is 10 subdirectories deep'); else if (e.isDirectory()) {
-            if (this.isExcluded(e, t, a, s)) return;
+        expect(n, 'Map'), expect(a, 'Array'), expect(s, 'Array'), expect(l, 'String'), expect(o, 'String'), 
+        expect(c, 'Number'), 1 != this.halt) if (c > 10) terminal.abnormal(blue(t), ' halting recursion at ', green(r.name), ' which is 10 subdirectories deep'); else if (e.isDirectory()) {
+            if (this.isExcluded(e, t, s, n)) return;
             if (null != r) {
-                var c = r.name.indexOf(e.name);
-                if (0 == c) {
-                    var p = e.name.length, m = r.name.charAt(p);
-                    if ('/' == m) return void terminal.invalid(blue(t), ' source path ', green(e.name), ' and destination path ', green(r.name), ' overlap. Halting to prevent infinite loop.');
+                var u = r.name.indexOf(e.name);
+                if (0 == u) {
+                    var m = e.name.length, p = r.name.charAt(m);
+                    if ('/' == p) return void terminal.invalid(blue(t), ' source path ', green(e.name), ' and destination path ', green(r.name), ' overlap. Halting to prevent infinite loop.');
                 }
                 if ('true' == o && r.mkDir(), !r.exists()) return void ('compare' == t ? terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(r.name)), ' does not exist in dest') : terminal.invalid(blue(t), ' destination path ', green(this.shortDisplayFilename(r.name)), ' does not exist, and ', green('mkdir'), ' is ', green('false')));
             }
             var h = new Bunch(e.name, '*', Bunch.FILE + Bunch.DIRECTORY), d = h.find(!1);
-            for (let c = 0; c < d.length; c++) {
-                var g = d[c], f = new Pfile(e).addPath(g), v = null == r ? null : new Pfile(r).addPath(g);
-                this.recurseFileSystem(f, v, t, i, s, n, a, l, o, u + 1);
+            for (let u = 0; u < d.length; u++) {
+                var g = d[u], f = new Pfile(e).addPath(g), v = null == r ? null : new Pfile(r).addPath(g);
+                this.recurseFileSystem(f, v, t, i, n, a, s, l, o, c + 1);
             }
         } else if (e.isFile()) {
-            if (!this.isIncluded(e, t, n, s)) return;
-            if (this.isExcluded(e, t, a, s)) return;
+            if (!this.isIncluded(e, t, a, n)) return;
+            if (this.isExcluded(e, t, s, n)) return;
             if (null != r) {
-                if (s.has('extension')) {
-                    var y = s.get('extension');
-                    '.' == y.charAt(0) && (y = y.substr(1)), r.replaceExtension(y);
+                if (n.has('extension')) {
+                    var b = n.get('extension');
+                    '.' == b.charAt(0) && (b = b.substr(1)), r.replaceExtension(b);
                 }
                 if ('compare' == t) return void (r.exists() || terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(e.name)), ' is in source, but ', green(this.shortDisplayFilename(r.name)), ' is not in dest'));
-                var b = this.allowOverwrite(e, r, l);
-                if (b < 0) return void (-230 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' same as ') + green(this.shortDisplayFilename(r.name)), s) : -240 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' older than ') + green(this.shortDisplayFilename(r.name)), s) : -300 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(r.name)) + blue(' already exists'), s) : terminal.logic(`allowOverwrite = ${b}`));
+                var y = this.allowOverwrite(e, r, l);
+                if (y < 0) return void (-230 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' same as ') + green(this.shortDisplayFilename(r.name)), n) : -240 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' older than ') + green(this.shortDisplayFilename(r.name)), n) : -300 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(r.name)) + blue(' already exists'), n) : terminal.logic(`allowOverwrite = ${y}`));
             }
-            s.set('source', e.name), s.set('dest', null == r ? null : r.name);
-            var x = this.replaceParamsWithValues(i, s), w = this.formatProgressMsg(t, e, r, x, 'shortForm');
-            this.executeChildProcess(t, x, w, s);
+            n.set('source', e.name), n.set('dest', null == r ? null : r.name);
+            var x = this.replaceParamsWithValues(i, n), P = this.formatProgressMsg(t, e, r, x, 'shortForm');
+            this.executeChildProcess(t, x, P, n);
         } else terminal.warning(blue(t), ' ', e.name, red(' NOT FOUND'));
     }
     regularTrace(e, r) {
@@ -228,34 +203,34 @@ module.exports = class Prorenata {
     }
     executeChildProcess(e, r, t, i) {
         expect(e, 'String'), expect(r, 'Array'), expect(t, 'String'), expect(i, 'Map');
-        var s = r[0], n = (new Pfile(s), r.slice(1)), a = {
+        var n = r[0], a = (new Pfile(n), r.slice(1)), s = {
             cwd: this.instructionPfile.getPath(),
             stdio: [ 0, 1, 2 ]
         };
         try {
             this.regularTrace(t, i);
-            var l = ChildProcess.spawnSync(s, n, a);
+            var l = ChildProcess.spawnSync(n, a, s);
             0 != l.status && (terminal.warning(blue(e), ' halting further steps because last step returned ', red(`${l.status}`)), 
             this.halt = !0);
         } catch (r) {
-            if (-1 != r.message.indexOf('spawnSync') && -1 != r.message.indexOf('ENOENT')) terminal.abnormal(blue(e), ' executable file not found ', blue(s)); else {
+            if (-1 != r.message.indexOf('spawnSync') && -1 != r.message.indexOf('ENOENT')) terminal.abnormal(blue(e), ' executable file not found ', blue(n)); else {
                 var o = r.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
                 terminal.abnormal(blue(e), o);
             }
         }
     }
-    formatProgressMsg(e, r, t, i, s) {
+    formatProgressMsg(e, r, t, i, n) {
         if (expect(e, 'String'), expect(r, [ 'Pfile', 'null' ]), expect(t, [ 'Pfile', 'null' ]), 
-        expect(i, 'Array'), expect(s, 'String'), 'shortForm' == s) {
+        expect(i, 'Array'), expect(n, 'String'), 'shortForm' == n) {
             if (null == t) {
-                var n = this.shortDisplayFilename(r.name);
-                return blue(e) + ' ' + green(n);
+                var a = this.shortDisplayFilename(r.name);
+                return blue(e) + ' ' + green(a);
             }
-            n = this.shortDisplayFilename(r.name);
-            var a = this.shortDisplayFilename(t.name);
-            return blue(e) + ' ' + green(n) + ' --\x3e ' + green(a);
+            a = this.shortDisplayFilename(r.name);
+            var s = this.shortDisplayFilename(t.name);
+            return blue(e) + ' ' + green(a) + ' --\x3e ' + green(s);
         }
-        if ('argsForm' == s) {
+        if ('argsForm' == n) {
             var l = '';
             for (let e = 0; e < i.length; e++) l += ' ' + i[e];
             return blue(e) + green(l);
@@ -276,21 +251,21 @@ module.exports = class Prorenata {
     }
     isIncluded(e, r, t, i) {
         if (expect(e, 'Pfile'), expect(r, 'String'), expect(t, 'Array'), 0 == t.length) return !0;
-        var s = e.name;
+        var n = e.name;
         for (let e = 0; e < t.length; e++) {
-            var n = t[e].replace('\\', '\\\\').replace('^', '\\^').replace('$', '\\$').replace('.', '\\.').replace('+', '\\+').replace('(', '\\(').replace(')', '\\)').replace('?', '.?').replace('*', '.*'), a = new RegExp(n + '$');
-            if (a.test(s)) return !0;
+            var a = t[e].replace('\\', '\\\\').replace('^', '\\^').replace('$', '\\$').replace('.', '\\.').replace('+', '\\+').replace('(', '\\(').replace(')', '\\)').replace('?', '.?').replace('*', '.*'), s = new RegExp(a + '$');
+            if (s.test(n)) return !0;
         }
         var l = t.join(', ');
-        return this.verboseTrace(blue(r) + ' not including ' + green(this.shortDisplayFilename(s)) + ' because it does not match ' + blue(l), i), 
+        return this.verboseTrace(blue(r) + ' not including ' + green(this.shortDisplayFilename(n)) + ' because it does not match ' + blue(l), i), 
         !1;
     }
     isExcluded(e, r, t, i) {
         expect(e, 'Pfile'), expect(r, 'String'), expect(t, 'Array');
-        var s = e.name;
+        var n = e.name;
         for (let e = 0; e < t.length; e++) {
-            var n = t[e].replace('\\', '\\\\').replace('^', '\\^').replace('$', '\\$').replace('.', '\\.').replace('+', '\\+').replace('(', '\\(').replace(')', '\\)').replace('?', '.?').replace('*', '.*'), a = new RegExp(n + '$');
-            if (a.test(s)) return this.verboseTrace(blue(r) + ' excluding ' + green(this.shortDisplayFilename(s)) + ' by request ' + blue(t[e]), i), 
+            var a = t[e].replace('\\', '\\\\').replace('^', '\\^').replace('$', '\\$').replace('.', '\\.').replace('+', '\\+').replace('(', '\\(').replace(')', '\\)').replace('?', '.?').replace('*', '.*'), s = new RegExp(a + '$');
+            if (s.test(n)) return this.verboseTrace(blue(r) + ' excluding ' + green(this.shortDisplayFilename(n)) + ' by request ' + blue(t[e]), i), 
             !0;
         }
         return !1;
@@ -299,8 +274,8 @@ module.exports = class Prorenata {
         if (expect(e, 'Pfile'), expect(r, 'Pfile'), expect(t, 'String'), 'always' == t) return 100;
         if ('older' == t) {
             if (r.exists()) {
-                var i = fs.statSync(r.name).mtime.getTime(), s = fs.statSync(e.name).mtime.getTime();
-                return s > i ? 220 : s == i ? -230 : s < i ? -240 : (terminal.logic('allowOverwrite'), 
+                var i = fs.statSync(r.name).mtime.getTime(), n = fs.statSync(e.name).mtime.getTime();
+                return n > i ? 220 : n == i ? -230 : n < i ? -240 : (terminal.logic('allowOverwrite'), 
                 -250);
             }
             return 210;
@@ -312,29 +287,29 @@ module.exports = class Prorenata {
         expect(e, 'String'), expect(r, [ 'GroupEntity', 'StandardEntity' ]);
         var t = new Map();
         if ('StandardEntity' == r.constructor.name) return t;
-        for (let p = 0; p < r.children.length; p++) {
-            var i = r.children[p], s = i.entityType;
-            if ('PragmaEntity' != s && 'GraynoteEntity' != s) {
+        for (let m = 0; m < r.children.length; m++) {
+            var i = r.children[m], n = i.entityType;
+            if ('PragmaEntity' != n && 'GraynoteEntity' != n) {
                 if (i.attributes.size > 0) {
-                    var n = Array.from(i.attributes.entries());
-                    for (let r = 0; r < n.length; r++) {
-                        var a = n[r][0], l = n[r][1];
-                        if ('class' == a) terminal.warning(blue(e), ' parameter values beginning with FULL-STOP must be quoted ', red(l)); else if ('id' == a) terminal.warning(blue(e), ' parameter values beginning with HASHTAG must be quoted #', red(l)); else if ('style' == a) terminal.warning(blue(e), ' parameter values beginning with CIRCUMFLEX must be quoted ^', red(l)); else if ('role' == a) terminal.warning(blue(e), ' parameter values beginning with PLUS-SIGN must be quoted +', red(l)); else if ('property' == a) terminal.warning(blue(e), ' parameter values beginning with QUESTION-MARK must be quoted ?', red(l)); else if ('data-junctor' == a) terminal.warning(blue(e), ' parameter values beginning with TILDE must be quoted ~', red(l)); else if ('sourceref' == a || 'href' == a || 'src' == a || 'data' == a || 'action' == a || 'cite' == a) {
+                    var a = Array.from(i.attributes.entries());
+                    for (let r = 0; r < a.length; r++) {
+                        var s = a[r][0], l = a[r][1];
+                        if ('class' == s) terminal.warning(blue(e), ' parameter values beginning with FULL-STOP must be quoted ', red(l)); else if ('id' == s) terminal.warning(blue(e), ' parameter values beginning with HASHTAG must be quoted #', red(l)); else if ('style' == s) terminal.warning(blue(e), ' parameter values beginning with CIRCUMFLEX must be quoted ^', red(l)); else if ('role' == s) terminal.warning(blue(e), ' parameter values beginning with PLUS-SIGN must be quoted +', red(l)); else if ('property' == s) terminal.warning(blue(e), ' parameter values beginning with QUESTION-MARK must be quoted ?', red(l)); else if ('data-junctor' == s) terminal.warning(blue(e), ' parameter values beginning with TILDE must be quoted ~', red(l)); else if ('sourceref' == s || 'href' == s || 'src' == s || 'data' == s || 'action' == s || 'cite' == s) {
                             terminal.warning(blue(e), ' parameter values beginning with GRAVE-ACCENT must be quoted ', red(`\`${l}\``));
-                        } else null == l && (l = a), terminal.warning(blue(e), ' parameter values beginning with ASTERISK must be quoted *', red(l));
+                        } else null == l && (l = s), terminal.warning(blue(e), ' parameter values beginning with ASTERISK must be quoted *', red(l));
                     }
                 }
-                if ('StandardEntity' == s) {
-                    var o = i.name, u = this.removeQuotedDelimiters(i.innerText);
+                if ('StandardEntity' == n) {
+                    var o = i.name, c = this.removeQuotedDelimiters(i.innerText);
                     if ('include' == o) {
-                        var c = t.has('include') ? t.get('include') + this.privateJoinChar + u : u;
-                        t.set(o, c);
+                        var u = t.has('include') ? t.get('include') + this.privateJoinChar + c : c;
+                        t.set(o, u);
                     } else if ('exclude' == o) {
-                        c = t.has('exclude') ? t.get('exclude') + this.privateJoinChar + u : u;
-                        t.set(o, c);
-                    } else 'overwrite' == o ? ('older' != u && 'always' != u && 'never' != u && terminal.warning(blue(e), ' the <overwrite> parameter is ', red(u), ' only ', blue('always | older | never'), ' are meaningful'), 
-                    t.set(o, u)) : t.set(o, u);
-                } else terminal.logic('Unhandled entity type ', green(s), ' in buildParameterMap');
+                        u = t.has('exclude') ? t.get('exclude') + this.privateJoinChar + c : c;
+                        t.set(o, u);
+                    } else 'overwrite' == o ? ('older' != c && 'always' != c && 'never' != c && terminal.warning(blue(e), ' the <overwrite> parameter is ', red(c), ' only ', blue('always | older | never'), ' are meaningful'), 
+                    t.set(o, c)) : t.set(o, c);
+                } else terminal.logic('Unhandled entity type ', green(n), ' in buildParameterMap');
             }
         }
         return t;
@@ -343,38 +318,38 @@ module.exports = class Prorenata {
         expect(e, 'String'), expect(r, 'Map');
         var t = this.commands.get(e);
         expect(t, 'String');
-        for (let [s, n] of r.entries()) {
-            var i = `<${s}>`;
-            -1 == t.indexOf(i) && terminal.warning(blue(e), ' does not use the parameter ', red(`<${s}>`), ' ignorning ', red(n));
+        for (let [n, a] of r.entries()) {
+            var i = `<${n}>`;
+            -1 == t.indexOf(i) && terminal.warning(blue(e), ' does not use the parameter ', red(`<${n}>`), ' ignorning ', red(a));
         }
-        var s = t.match(/(\<.*?\>)/g);
-        if (null != s) for (let t = 0; t < s.length; t++) {
-            var n = s[t].substr(1, s[t].length - 2);
-            r.has(n) || terminal.warning(blue(e), ' expects a parameter named ', red(`<${n}>`));
+        var n = t.match(/(\<.*?\>)/g);
+        if (null != n) for (let t = 0; t < n.length; t++) {
+            var a = n[t].substr(1, n[t].length - 2);
+            r.has(a) || terminal.warning(blue(e), ' expects a parameter named ', red(`<${a}>`));
         }
     }
     verifyBuiltinParams(e, r) {
         if (expect(e, 'String'), expect(r, 'Map'), 'copy' == e) var t = [ 'source', 'dest' ], i = [ 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress' ]; else if ('recurse' == e) t = [ 'source', 'exec' ], 
         i = [ 'dest', 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress' ]; else if ('compare' == e) t = [ 'source', 'dest' ], 
         i = [ 'include', 'exclude', 'extension' ]; else if ('run' == e) t = [ 'sh' ], i = [ 'progress' ]; else terminal.logic('verifyBuiltinParams');
-        for (let [s, n] of r.entries()) t.includes(s) || i.includes(s) || terminal.warning(blue(e), ' does not use the parameter ', red(`<${s}>`), ', ignorning ', red(n));
+        for (let [n, a] of r.entries()) t.includes(n) || i.includes(n) || terminal.warning(blue(e), ' does not use the parameter ', red(`<${n}>`), ', ignorning ', red(a));
         for (let i = 0; i < t.length; i++) r.has(t[i]) || terminal.warning(blue(e), ' expects a parameter named ', red(`<${t[i]}>`));
     }
     replaceParamsWithValues(e, r) {
         expect(e, 'Array'), expect(r, 'Map');
         var t = new Array();
         t.push(e[0]);
-        for (let a = 1; a < e.length; a++) {
-            var i = e[a];
+        for (let s = 1; s < e.length; s++) {
+            var i = e[s];
             if ('<' == i.charAt(0) && '>' == i.charAt(i.length - 1)) {
-                var s = i.substr(1, i.length - 2);
-                if (r.has(s)) {
-                    var n = r.get(s);
-                    t.push(n);
+                var n = i.substr(1, i.length - 2);
+                if (r.has(n)) {
+                    var a = r.get(n);
+                    t.push(a);
                     continue;
                 }
             }
-            t.push(e[a]);
+            t.push(e[s]);
         }
         return t;
     }

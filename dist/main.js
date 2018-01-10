@@ -1,3 +1,3 @@
-var Prorenata = require('./prorenata.class.js'), prorenata = new Prorenata();
+var CLI = require('./cli.class.js'), cli = new CLI();
 
-prorenata.execute();
+cli.validateOptions() && cli.execute();
