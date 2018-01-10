@@ -1,0 +1,14 @@
+!blue 2.0
+
+template {
+	tree    ls -lia <source>
+}
+
+//
+// ---------- recurse without dest ---------- 
+recurse {
+	source    './appA/fused'
+	dest      './appA/null'		// TODO: must specify a 'dest' for prorenata at this time
+	exec      tree
+	mkdir true
+}

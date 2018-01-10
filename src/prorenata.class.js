@@ -35,6 +35,7 @@ export default class Prorenata {
 		this.root = null;					// instruction file RootEntity
 		this.commands = new Map();			// cmd (String) --> cmdTemplate (String)
 		this.privateJoinChar = '|';			// use this to join and split multiple 'include' and 'exclude' params internally treated as one
+		this.halt = false;					// halt further execution
 		this.setup();
 		Object.seal(this);
 	}
@@ -44,6 +45,7 @@ export default class Prorenata {
 		this.commands.set('template','builtin');
 		this.commands.set('copy',    'builtin');
 		this.commands.set('recurse', 'builtin');
+		this.commands.set('compare', 'builtin');
 		this.commands.set('run',     'builtin');
 	}
 
@@ -53,14 +55,75 @@ export default class Prorenata {
 		// argv[1] main.js
 		// argv[2] instructionfile
 		if (process.argv.length <= 2) {
-			terminal.invalid('usage: prn scriptfile');
+			process.stdout.write('usage: prn scriptfile\n');
+			process.stdout.write('       prn --version\n');
+			process.stdout.write('       prn --help\n');
+			return;
+		}
+
+		if (process.argv[2] == '--version') {
+			process.stdout.write('prorenata version 1.0\n');
+			return;
+		}
+		
+		if (process.argv[2] == '--help') {
+			var line = new Array();
+			line.push("");
+			line.push("Script files contain commands in this form:");
+			line.push("");
+			line.push("command {");
+			line.push("   parameter value");
+			line.push("}");
+			line.push("");
+			line.push("commands := template | copy | recurse | compare | run");
+			line.push("   'template'  defines new commands for use with the <exec> parameter of 'recurse'");
+			line.push("   'copy'      recursively copies all files in <source> to <dest>");
+			line.push("   'recurse'   runs a template-defined command recursively over all files in <source>");
+			line.push("   'compare'   lists files that are in <source> but not in <dest>");
+			line.push("   'run'       executes an arbitrary shell command");
+			line.push("");
+			line.push("parameters := source | dest | include | exclude | extension | exec | overwrite | mkdir | progress");
+			line.push("   <source>    an absolute or relative path");
+			line.push("   <dest>      an absolute or relative path");
+			line.push("   <include>   a file pattern to include, if omitted defaults to '*'");
+			line.push("   <exclude>   a file pattern to exclude");
+			line.push("   <extension> the filename extension to apply to destination filenames");
+			line.push("   <exec>      a command name defined in the 'template' section");
+			line.push("   <overwrite> := always | older | never");
+			line.push("   <mkdir>     := true | false");
+			line.push("   <progress>  := verbose | regular | none");
+			line.push("   <sh>        a shell command to execute; used with the 'run' command");
+			line.push("");
+			line.push("Sample script to copy *.html from 'foo' to 'bar'");
+			line.push("");
+			line.push("copy {");
+			line.push("   source  foo");
+			line.push("   dest    bar");
+			line.push("   include '*.html'");
+			line.push("}");
+			line.push("");
+			line.push("Sample script to recursively compile LESS into CSS from 'foo' to 'bar'");
+			line.push("template {");
+			line.push("   LESS lessc <source> <dest>");
+			line.push("}");
+			line.push("recurse {");
+			line.push("   source    foo");
+			line.push("   dest      bar");
+			line.push("   include   '*.less'");
+			line.push("   extension '.css'");
+			line.push("   exec      LESS");
+			line.push("}");
+			line.push("");
+			line.push("");
+			var s = line.join('\n');
+			process.stdout.write(s);
 			return;
 		}
 
 		this.instructionPfile = new Pfile(process.argv[2]);
 		this.instructionPfile.makeAbsolute();
 		if (!this.instructionPfile.exists()) {
-			terminal.invalid(yellow(this.instructionPfile.name), ' not found');
+			process.stdout.write(green(this.instructionPfile.name), ' not found\n');
 			return;
 		}
 		
@@ -84,6 +147,9 @@ export default class Prorenata {
 	// Loop over the root's immediate children
 	processInstructions() {
 		for (let i=0; i < this.root.children.length; i++) {
+			
+			if (this.halt == true)
+				return;
 			
 			var entity = this.root.children[i];
 			var type = entity.entityType;
@@ -113,7 +179,7 @@ export default class Prorenata {
 		expect(entity, ['GroupEntity', 'StandardEntity']);
 		
 		//> cmd is one of the builtin command, or one of the commands defined by the user inside the 'template' command
-		//   template | copy | recurse
+		//   template | copy | recurse | compare | run
 		var cmd = entity.name;
 		
 		if (!this.commands.has(cmd)) {
@@ -128,7 +194,7 @@ export default class Prorenata {
 			this.processUserDefinedCommand(cmd, cmdTemplate, entity);
 	}
 	
-	//> cmd is template | copy | recurse
+	//> cmd is template | copy | recurse | run
 	//> entity is a group that contains definitions (for 'template') or parameters (for 'copy' and 'recurse')
 	processBuiltinCommand(cmdName, entity) {
 		expect(cmdName, 'String');
@@ -147,6 +213,10 @@ export default class Prorenata {
 				this.processRecurseCommand(entity);
 				break;
 				
+			case 'compare':
+				this.processCompareCommand(entity);
+				break;
+				
 			case 'run':
 				this.processRunCommand(entity);
 				break;
@@ -156,6 +226,9 @@ export default class Prorenata {
 		}
 	}
 	
+	//> cmdName is anything else besides: template | copy | recurse | run
+	//> cmdTemplate is the command to be executed beginning with the executable filename and including all <substitution> arguments and fixed arguments
+	//> localEntity is the group item that contains the user-supplied parameter values to supply to the <substitution> arguments 
 	processUserDefinedCommand(cmdName, cmdTemplate, localEntity) {
 		expect(cmdName, 'String');
 		expect(cmdTemplate, 'String');
@@ -166,7 +239,11 @@ export default class Prorenata {
 		
 		var processArgs = cmdTemplate.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
 		var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
-		this.executeChildProcess(cmdName, finalArgs, null, null);
+		
+		var source = paramMap.get('source');
+		var dest = paramMap.get('dest');
+		var traceMsg = this.formatProgressMsg(cmdName, source, dest, finalArgs, 'shortForm');
+		this.executeChildProcess(cmdName, finalArgs, traceMsg, paramMap);
 	}
 	
 	//-------------------------------------------------------------------------
@@ -190,7 +267,7 @@ export default class Prorenata {
 			else if (type == 'PragmaEntity' || type == 'GraynoteEntity')
 				continue;
 			else
-				terminal.logic('Unhandled entity type ', yellow(type), ' in processTemplateCommand');
+				terminal.logic('Unhandled entity type ', green(type), ' in processTemplateCommand');
 		}
 	}
 	
@@ -221,15 +298,24 @@ export default class Prorenata {
 		// The cmdTemplate for 'recurse' command is the value pointed to by the 'exec' param
 		var cmdName = paramMap.get('exec').trim();
 		if (!this.commands.has(cmdName)) {
-			terminal.warning(blue('recurse '), yellow('<exec>'), ' specifies an undefined command ', red(cmdName));
+			terminal.warning(blue('recurse '), green('<exec>'), ' specifies an undefined command ', red(cmdName));
 			return;
 		}
 		var cmdTemplate = this.commands.get(cmdName);
 		expect(cmdTemplate, 'String');
-		
 		var processArgs = cmdTemplate.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
-
 		this.beginRecursion(cmdName, processArgs, paramMap);
+	}
+
+	//^ The 'compare' command
+	processCompareCommand(compareEntity) {
+		expect(compareEntity, 'GroupEntity');
+		
+		var paramMap = this.buildParameterMap('compare', compareEntity);
+		this.verifyBuiltinParams('compare', paramMap);
+
+		var processArgs = [];
+		this.beginRecursion('compare', processArgs, paramMap);
 	}
 
 	//^ The 'run' command
@@ -237,26 +323,37 @@ export default class Prorenata {
 	processRunCommand(runEntity) {
 		expect(runEntity, 'GroupEntity');
 
+		var paramMap = this.buildParameterMap('run', runEntity);
+		this.verifyBuiltinParams('run', paramMap);
+
 		for (let i=0; i < runEntity.children.length; i++) {
 			var childEntity = runEntity.children[i];
 			var type = childEntity.entityType;
 
+			if (this.halt == true)
+				return;
+			
 			if ( type == 'StandardEntity') {
 				var shKeyword = childEntity.name;
 				var shCommand = childEntity.innerText;
-				if (shKeyword != 'sh') {
-					terminal.abnormal(blue('run'), ' items within this command should be preceeded by ', yellow(sh), ' ignoring ', red(shKeyword), ' ',  red(shCommand) );
+				if (shKeyword == 'progress') {
+					return;
+				}
+				else if (shKeyword != 'sh') {
+					terminal.invalid(blue('run'), ' items within this command should be preceeded by ', green('sh'), ' ignoring ', red(shKeyword), ' ',  red(shCommand) );
 					return;
 				}
 				else {
 					var commandArgs = shCommand.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
-					this.executeChildProcess('run', commandArgs, null, null);
+
+					var traceMsg = this.formatProgressMsg('run', null, null, commandArgs, 'argsForm');
+					this.executeChildProcess('run', commandArgs, traceMsg, paramMap);
 				}
 			}
 			else if (type == 'PragmaEntity' || type == 'GraynoteEntity')
 				continue;
 			else
-				terminal.logic('Unhandled entity type ', yellow(type), ' in processRunCommand');
+				terminal.logic('Unhandled entity type ', green(type), ' in processRunCommand');
 		}
 	}
 	
@@ -264,7 +361,7 @@ export default class Prorenata {
 	// recursion
 	//-------------------------------------------------------------------------
 
-	//> cmdName is either 'copy', or the <exec> param of a 'recurse' command
+	//> cmdName is either 'copy', 'compare', or the <exec> param of a 'recurse' command
 	//> processArgs is an array where [0] is the executable, and [1]..[N] are the arguments
 	//> paramMap is a map of all parameter values 
 	beginRecursion(cmdName, processArgs, paramMap) {
@@ -274,9 +371,30 @@ export default class Prorenata {
 		
 		expect(this.instructionPfile, 'Pfile');
 		var path = this.instructionPfile.getPath();
-		var source = new Pfile(path).addPath(paramMap.get('source'));
-		var dest = new Pfile(path).addPath(paramMap.get('dest'));
-	
+		
+		// source is specified as absolute paths, or relative to the instruction file itself
+		if (paramMap.has('source')) {
+			var source = new Pfile(paramMap.get('source'));
+			if (!source.isAbsolutePath())
+				source = new Pfile(path).addPath(paramMap.get('source'));
+		}
+		else {
+			terminal.abnormal(blue(cmdName), ' no ', red('<source>'), ' parameter provided, can not continue');
+			return;
+		}
+		
+		// dest is specified as absolute paths, or relative to the instruction file itself
+		if (paramMap.has('dest')) {
+			var dest = new Pfile(paramMap.get('dest'));
+			if (!dest.isAbsolutePath())
+				dest = new Pfile(path).addPath(paramMap.get('dest'));
+		}
+		else {
+			// If the 'dest' parameter is not provided, use null as a signal
+			// to subsequent processing to ignore anything related to a destination file.
+			var dest = null;
+		}
+		
 		var includePatterns = new Array();
 		if (paramMap.has('include')) {
 			includePatterns = paramMap.get('include').split(this.privateJoinChar);
@@ -289,9 +407,18 @@ export default class Prorenata {
 			expect(excludePatterns, 'Array');
 		}
 
-		var overwriteRule = 'never';	// set default to 'never' for safety
+		var overwriteRule = 'never';	// always | older | never†
 		if (paramMap.has('overwrite')) {
 			overwriteRule = paramMap.get('overwrite');
+			if (overwriteRule != 'always' && overwriteRule != 'older' && overwriteRule != 'never')
+				overwriteRule = 'never';
+		}
+
+		var mkDir = (cmdName == 'compare') ? 'false' : 'true';			// default is 'false' for compare, and 'true' for others
+		if (paramMap.has('mkdir')) {
+			mkDir = paramMap.get('mkdir');
+			if (mkDir != 'true' && mkDir != 'false')
+				mkDir = 'false';
 		}
 
 		// These params are not needed beyond this point
@@ -299,33 +426,71 @@ export default class Prorenata {
 		paramMap.delete('include');
 		paramMap.delete('exclude');
 		paramMap.delete('overwrite');
+		paramMap.delete('mkdir');
 		
-		this.recurseFileSystem(source, dest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule);		
+		var depth = 0;
+		this.recurseFileSystem(source, dest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule, mkDir, depth);		
 	}
 	
 	//> source is a Pfile of the fully qualified name at this level of recursion
 	//> dest is a Pfile of the fully qualified name at this level of recursion
-	//> cmdName is name pointed to by the 'exec' param
+	//> cmdName is either 'copy', 'compare', or the <exec> param of a 'recurse' command
 	//> processArgs is an array where [0] is the executable, and [1]..[N] are the arguments
 	//> paramMap is a map of all parameter values, except 'exec', 'include', and 'exclude'
 	//> includePatterns is an array of patterns of filenames that should be included in further processing
 	//> excludePatterns is an array of patterns of filenames that should be excluded from further processing
-	//> allowOverwrite is always | older | never
-	recurseFileSystem(source, dest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule) {
+	//> overwriteRule is 'always' | 'older' | 'never'
+	//> mkDir is 'true' or 'false'
+	//> depth is used only to prevent infinite loop runaways
+	recurseFileSystem(source, dest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule, mkDir, depth) {
 		expect(source, 'Pfile');
-		expect(dest, 'Pfile');
+		expect(dest, ['Pfile', 'null']);
 		expect(cmdName, 'String');
 		expect(processArgs, 'Array'); 
 		expect(paramMap,  'Map');
 		expect(includePatterns, 'Array'); 
 		expect(excludePatterns, 'Array');
+		expect(overwriteRule, 'String');
+		expect(mkDir, 'String');
+		expect(depth, 'Number');
+		
+		if (this.halt == true)
+			return;
+		
+		if (depth > 10) {
+			terminal.abnormal(blue(cmdName), ' halting recursion at ', green(dest.name), ' which is 10 subdirectories deep');
+			return;
+		}
 		
 		if (source.isDirectory()) {
-			if (this.isExcluded(source, cmdName, excludePatterns))
+			if (this.isExcluded(source, cmdName, excludePatterns, paramMap))
 				return;
 
-			// if 'mkdir' == true
-			dest.mkDir();
+			if (dest != null) {
+				// safety check: the destination path must not be a subdirectory of the source path
+				// or else we risk an infinite recursion of new deeply nested directories.
+				var commonPartStart = dest.name.indexOf(source.name);
+				if (commonPartStart == 0) {
+					// source: appA/fused/blue
+					// dest:   appA/fused/blue/subdir  <-- problem
+					// dest:   appA/fused/blue2        <-- no problem
+					var commonPartEnd = source.name.length;
+					var firstUnmatchedChar = dest.name.charAt(commonPartEnd);
+					if (firstUnmatchedChar == '/') {
+						terminal.invalid(blue(cmdName), ' source path ', green(source.name), ' and destination path ', green(dest.name), ' overlap. Halting to prevent infinite loop.');
+						return;
+					}
+				}				
+				if (mkDir == 'true')
+					dest.mkDir();
+				if (!dest.exists()) {
+					if (cmdName == 'compare')
+						terminal.trace(blue(cmdName), ' ', green(this.shortDisplayFilename(dest.name)), ' does not exist in dest');
+					else
+						terminal.invalid(blue(cmdName), ' destination path ', green(this.shortDisplayFilename(dest.name)), ' does not exist, and ', green('mkdir'), ' is ', green('false'));
+					return;
+				}
+			}
 			
 			var bunch = new Bunch(source.name, '*', Bunch.FILE + Bunch.DIRECTORY);
 			var files = bunch.find(false);
@@ -333,36 +498,83 @@ export default class Prorenata {
 			for (let i=0; i < files.length; i++) {
 				var basename = files[i];
 				var childSource = new Pfile(source).addPath(basename);
-				var childDest = new Pfile(dest).addPath(basename);
-				this.recurseFileSystem(childSource, childDest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule);
+				var childDest = (dest == null) ? null : new Pfile(dest).addPath(basename);
+				this.recurseFileSystem(childSource, childDest, cmdName, processArgs, paramMap, includePatterns, excludePatterns, overwriteRule, mkDir, depth +1);
 			}
 		}
 		else if (source.isFile()) {
-			if (!this.isIncluded(source, cmdName, includePatterns))
+			if (!this.isIncluded(source, cmdName, includePatterns, paramMap))
 				return;
 
-			if (this.isExcluded(source, cmdName, excludePatterns))
+			if (this.isExcluded(source, cmdName, excludePatterns, paramMap))
 				return;
 
-			if (!this.allowOverwrite(source, dest, overwriteRule)) {
-				if (overwriteRule == 'older')
-					terminal.trace(blue(cmdName), ' not overwriting because ', yellow(this.shortDisplayFilename(source.name)), blue(' older than / same as '), yellow(this.shortDisplayFilename(dest.name)));
-				else // if (overwriteRule == 'never')
-					terminal.trace(blue(cmdName), ' not overwriting because ', yellow(this.shortDisplayFilename(dest.name)), blue(' already exists'));
-				return;
+			if (dest != null) {
+				// apply new filename extension to the dest, if requested
+				if (paramMap.has('extension')) {
+					var newExt = paramMap.get('extension');
+					if (newExt.charAt(0) == '.')
+						newExt = newExt.substr(1);
+					dest.replaceExtension(newExt);
+				}
+
+				if (cmdName == 'compare') {
+					if (!dest.exists()) {
+						terminal.trace(blue(cmdName), ' ', green(this.shortDisplayFilename(source.name)), ' is in source, but ', green(this.shortDisplayFilename(dest.name)), ' is not in dest');
+					}
+					return; // nothing else to do here
+				}
+
+				var ow = this.allowOverwrite(source, dest, overwriteRule);
+				if (ow < 0) {
+					if (ow == -230)
+						this.verboseTrace(blue(cmdName) + ' not overwriting because ' + green(this.shortDisplayFilename(source.name)) + blue(' same as ') + green(this.shortDisplayFilename(dest.name)), paramMap);
+					else if (ow == -240)
+						this.verboseTrace(blue(cmdName) + ' not overwriting because ' + green(this.shortDisplayFilename(source.name)) + blue(' older than ') + green(this.shortDisplayFilename(dest.name)), paramMap);
+					else if (ow == -300)
+						this.verboseTrace(blue(cmdName) + ' not overwriting because ' + green(this.shortDisplayFilename(dest.name)) + blue(' already exists'), paramMap);
+					else
+						terminal.logic(`allowOverwrite = ${ow}`);
+					return;
+				}
 			}
 			
-			// prepare two short names for use with short terminal logging:
-			var shortSource = this.shortDisplayFilename(source.name);
-			var shortDest = this.shortDisplayFilename(dest.name);
-			
 			paramMap.set('source', source.name);
-			paramMap.set('dest', dest.name);
+			paramMap.set('dest', (dest == null) ? null : dest.name);
 			var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
-			this.executeChildProcess(cmdName, finalArgs, shortSource, shortDest);
+			var traceMsg = this.formatProgressMsg(cmdName, source, dest, finalArgs, 'shortForm');
+			this.executeChildProcess(cmdName, finalArgs, traceMsg, paramMap);
 		}
 		else
 			terminal.warning(blue(cmdName), ' ', source.name, red(' NOT FOUND'));
+	}
+	
+	//> only write this message to terminal if the 'progress' parameter is 'regular' or 'verbose'
+	regularTrace(traceMsg, paramMap) {
+		expect(traceMsg, 'String');
+		expect(paramMap, 'Map');
+		
+		if (paramMap.has('progress'))
+			var progress = paramMap.get('progress');
+		else
+			var progress = 'regular';
+		
+		if (progress == 'regular' || progress == 'verbose')
+			terminal.trace(traceMsg);
+	}
+	
+	//> only write this message to terminal if the 'progress' parameter is 'verbose'
+	verboseTrace(traceMsg, paramMap) {
+		expect(traceMsg, 'String');
+		expect(paramMap, 'Map');
+		
+		if (paramMap.has('progress'))
+			var progress = paramMap.get('progress');
+		else
+			var progress = 'regular';
+		
+		if (progress == 'verbose')
+			terminal.trace(traceMsg);
 	}
 	
 	//-------------------------------------------------------------------------
@@ -371,13 +583,12 @@ export default class Prorenata {
 
 	//> cmdName is for console feedback only
 	//> finalArgs[0] is the executable filename, finalArgs[1]...[N] are the arguments
-	//> shortSource is a shortened version of the source filename, for use in terminal logging
-	//> shortDest is a shortened version of the dest filename, for use in terminal logging
-	executeChildProcess(cmdName, finalArgs, shortSource, shortDest) {
+	//> traceMsg is the progress message to send to the terminal 
+	executeChildProcess(cmdName, finalArgs, traceMsg, paramMap) {
 		expect(cmdName, 'String');
 		expect(finalArgs, 'Array');
-		expect(shortSource, ['String', 'null']);
-		expect(shortDest, ['String', 'null']);
+		expect(traceMsg, 'String');
+		expect(paramMap, 'Map');
 
 		var exeFile = finalArgs[0];
 		var exePfile = new Pfile(exeFile);
@@ -389,20 +600,12 @@ export default class Prorenata {
 		};
 		
 		try {
-			var formattedArgs = '';
-			if (shortSource == null && shortDest == null) {
-				for (let i=0; i < args.length; i++)
-					formattedArgs += ' ' + this.shortDisplayFilename(args[i]);
-				formattedArgs = yellow(formattedArgs);
+			this.regularTrace(traceMsg, paramMap);
+			var obj = ChildProcess.spawnSync(exeFile, args, options);
+			if (obj.status != 0) {
+				terminal.warning(blue(cmdName), ' halting further steps because last step returned ', red(`${obj.status}`));
+				this.halt = true;
 			}
-			else {
-				formattedArgs = ' ' + yellow(shortSource) + ' --> ' + yellow(shortDest);
-			}
-
-			terminal.trace(blue(cmdName), ' ', exeFile, formattedArgs);
-						
-//.			ChildProcess.execFileSync(exeFile, args, options);
-			ChildProcess.spawnSync(exeFile, args, options);
 		}
 		catch(err) {
 			
@@ -422,6 +625,36 @@ export default class Prorenata {
 	//-------------------------------------------------------------------------
 	// helpers
 	//-------------------------------------------------------------------------
+	
+	//^ Format a message suitable for the terminal to show progress
+	formatProgressMsg(cmdName, source, dest, finalArgs, msgType) {
+		expect(cmdName, 'String');
+		expect(source, ['Pfile', 'null']);
+		expect(dest, ['Pfile', 'null']);
+		expect(finalArgs, 'Array')
+		expect(msgType, 'String');
+		
+		if (msgType == 'shortForm') {
+			if (dest == null) {
+				var sourceName = this.shortDisplayFilename(source.name);
+				return blue(cmdName) + ' ' + green(sourceName);
+			}
+			else { //if (dest != null)
+				var sourceName = this.shortDisplayFilename(source.name);
+				var destName = this.shortDisplayFilename(dest.name);
+				return blue(cmdName) + ' ' + green(sourceName) + ' --> ' + green(destName);
+			}
+		}
+		else if (msgType == 'argsForm') {
+			var str = '';
+			for (let i=0; i < finalArgs.length; i++)
+				str += ' ' + finalArgs[i];
+			return blue(cmdName) + green(str);
+		}
+		else
+			terminal.logic('formatProgressMsg');
+			return '';
+	}
 	
 	//^ For terminal messages, it is desirable to shorten the filenames by removing the common leading path portion
 	//> fullyQualifiedFilename
@@ -449,7 +682,7 @@ export default class Prorenata {
 	
 	//< return true if the trailing part of the path matches one of the patterns to include
 	//< also returns true if there are no patterns.
-	isIncluded(path, cmdName, includePatterns) {
+	isIncluded(path, cmdName, includePatterns, paramMap) {
 		expect(path, 'Pfile');
 		expect(cmdName, 'String');
 		expect(includePatterns, 'Array');
@@ -476,12 +709,12 @@ export default class Prorenata {
 				return true;
 		}
 		var joinedPatterns = includePatterns.join(', ');
-		terminal.trace(blue(cmdName), ' not including ', yellow(this.shortDisplayFilename(filename)), ' because it does not match ', blue(joinedPatterns));
+		this.verboseTrace(blue(cmdName) + ' not including ' + green(this.shortDisplayFilename(filename)) + ' because it does not match ' + blue(joinedPatterns), paramMap);
 		return false;
 	}
 	
 	//< return true if the trailing part of the path matches one of the patterns to exclude
-	isExcluded(path, cmdName, excludePatterns) {
+	isExcluded(path, cmdName, excludePatterns, paramMap) {
 		expect(path, 'Pfile');
 		expect(cmdName, 'String');
 		expect(excludePatterns, 'Array');
@@ -502,38 +735,55 @@ export default class Prorenata {
 			// does this user's pattern match the trailing portion of the user's path?
 			var rx = new RegExp(pattern + '$');
 			if (rx.test(filename)) {
-				terminal.trace(blue(cmdName), ' excluding ', yellow(this.shortDisplayFilename(filename)), ' by request ', blue(excludePatterns[i]));
+				this.verboseTrace(blue(cmdName) + ' excluding ' + green(this.shortDisplayFilename(filename)) + ' by request ' + blue(excludePatterns[i]), paramMap);
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	//< returns true if the overwriteRule is 'always'
-	//< returns false if the overwrite rule is 'never' and the dest exists
-	//< returns true if the overwrite rule is 'older' and the dest is older than the source. 
-	//< returns false if the overwrite rule is 'older' and the dest is newer or the same as the source. 
+	// Do not proceed if return value is negative
+	//< returns  100 if overwrite 'always'
+	//< returns  210 if overwrite 'older' and dest does not exist
+	//< returns  220 if overwrite 'older' and source is newer than dest
+	//< returns -230 if overwrite 'older' but source and dest have same timestamp
+	//< returns -240 if overwrite 'older' but source has an older timestamp than dest
+	//< returns  300 if overwrite 'never' but dest does not exist
+	//< returns -300 if overwrite 'never' and dest exists
 	allowOverwrite(source, dest, overwriteRule) {
 		expect(source, 'Pfile');
 		expect(dest, 'Pfile');
 		expect(overwriteRule, 'String');
 		
 		if (overwriteRule == 'always')
-			return true;
+			return 100;
 		
-		else if (overwriteRule == 'never') {
-			return !dest.exists();
-		}
-
 		else if (overwriteRule == 'older') {
 			if (!dest.exists())
-				return true;
-			else
-				return (fs.statSync(dest.name).mtime < fs.statSync(source.name).mtime);
+				return 210;
+			else {
+				var destTime = fs.statSync(dest.name).mtime.getTime();
+				var sourceTime = fs.statSync(source.name).mtime.getTime();
+				if (sourceTime > destTime)
+					return 220;
+				else if (sourceTime == destTime)
+					return -230;
+				else if (sourceTime < destTime)
+					return -240;
+				else {
+					terminal.logic('allowOverwrite');
+					return -250;
+				}
+			}
 		}
+
+		else if (overwriteRule == 'never') {
+			return dest.exists() ? -300 : 300;
+		}
+
 		else {
 			terminal.logic('Unhandled overwriteRule ', red(overwriteRule));
-			return false;
+			return -400;
 		}
 	}
 	
@@ -614,7 +864,7 @@ export default class Prorenata {
 				}
 			}
 			else
-				terminal.logic('Unhandled entity type ', yellow(type), ' in buildParameterMap');
+				terminal.logic('Unhandled entity type ', green(type), ' in buildParameterMap');
 		}
 		return paramMap;
 	}
@@ -650,7 +900,7 @@ export default class Prorenata {
 	}
 
 	// Verify that every parameter specified by the user is needed
-	//> cmd is 'copy' or 'recurse'
+	//> cmd is 'copy' or 'recurse' or 'compare' or 'run'
 	//> paramMap is a Map of the parameters specified by the user, in entities subordinate to the command
 	verifyBuiltinParams(cmd, paramMap) {
 		expect(cmd, 'String');
@@ -658,14 +908,22 @@ export default class Prorenata {
 		
 		if (cmd == 'copy') {
 			var requiredParams = ['source', 'dest'];
-			var optionalParams = ['include', 'exclude', 'overwrite', 'onfailure'];
+			var optionalParams = ['include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress'];
 		}
 		else if (cmd == 'recurse') {
 			var requiredParams = ['source', 'exec'];
-			var optionalParams = ['dest', 'include', 'exclude', 'overwrite', 'onfailure'];
+			var optionalParams = ['dest', 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress'];
+		}
+		else if (cmd == 'compare') {
+			var requiredParams = ['source', 'dest'];
+			var optionalParams = ['include', 'exclude', 'extension'];
+		}
+		else if (cmd == 'run') {
+			var requiredParams = ['sh'];
+			var optionalParams = ['progress'];
 		}
 		else
-			terminal.logic('Unexpected cmd ', red(cmd));
+			terminal.logic('verifyBuiltinParams');
 		
 		// are there any parameters specified by the user, but not required or optional
 		for (let [paramName, paramValue] of paramMap.entries()) {
@@ -682,6 +940,8 @@ export default class Prorenata {
 	}
 
 	//^ The replaceParamsWithValues function replaces parameter names with parameter values
+	//> processArgs is an array of command arguments that may contain <substitution> placeholders
+	//> paramMap is a map of paramName --> paramValue of the group we are working on
 	//< returns an array of final args, where
 	//     finalArgs[0] is the executable command,
 	//     <substitution> parameters are replaced with their corrects values,
@@ -691,19 +951,19 @@ export default class Prorenata {
 		expect(paramMap, 'Map');
 
 		var finalArgs = new Array();
-		finalArgs.push(processArgs[0]); // the executable command
+		finalArgs.push(processArgs[0]); 								// the executable command
 
 		for (let i=1; i < processArgs.length; i++) {
-			var template = processArgs[i];		// like <source>
+			var template = processArgs[i];								// like <source>
 			if ((template.charAt(0) == '<') && (template.charAt(template.length-1) == '>')) { 
-				var unadorned = template.substr(1, template.length-2);			// like source
+				var unadorned = template.substr(1, template.length-2);	// like source
 				if (paramMap.has(unadorned)) {
 					var replacementValue = paramMap.get(unadorned);
 					finalArgs.push(replacementValue);
 					continue;
 				}
 			}
-			finalArgs.push(processArgs[i]);		// pass through as-is
+			finalArgs.push(processArgs[i]);								// pass through as-is
 		}
 		return finalArgs;
 	}

@@ -1,0 +1,17 @@
+!blue 2.0
+
+// ----------- compare 1 --------------
+compare {
+	source    '../test/appA/fused'
+	dest      '../test/appSuite/proto'
+	include   img
+	include   css
+	include   js
+	include   tmp
+}
+// ----------- compare 2 --------------
+compare {
+	source    '../test/appA/fused/html'
+	dest      '../test/appA/fused/blue'
+	extension '.blue2'
+}

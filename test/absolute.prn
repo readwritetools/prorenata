@@ -1,0 +1,18 @@
+!blue 2.0
+
+//  ---------- allow absolute paths  ---------- 
+copy {
+	source    /musings/lib/prorenata/test/appA/fused
+	dest      /musings/lib/prorenata/test/appA/fused2
+	exclude   'page-two.blue'
+	include   '*.css'
+	include   '*.blue'
+	mkdir     true
+	progress none			// none | regular† | verbose
+}
+
+//  ---------- cleanup after test ---------- 
+run {
+	sh rm -rf /musings/lib/prorenata/test/appA/fused2
+	progress regular
+}

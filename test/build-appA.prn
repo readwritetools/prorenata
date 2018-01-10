@@ -2,33 +2,32 @@
 
 template {
 	bifurcate 	 bifurcate <source> <dest> --define=RWDOC
-	blue 		 node C:/neonave/lib/bluephrase/dbg/main.js compile <source> <dest> --progress
-	exim 		 node --use_strict C:/neonave/lib/exim/src/rewrite.js <source> <dest> <rootfile>
-	uglify       node C:/Users/Propellerhead/AppData/Roaming/npm/node_modules/uglify-es/bin/uglifyjs <source> --output <dest> --ecma 8 --compress		/* npm install uglify-es -g */
+	//blue 		 blue compile <source> <dest> --progress
+	blue 		 node /musings/lib/bluephrase/dist/main.js compile <source> <dest> --progress
+	// uglify       node C:/Users/Propellerhead/AppData/Roaming/npm/node_modules/uglify-es/bin/uglifyjs <source> --output <dest> --ecma 8 --compress		/* npm install uglify-es -g */
 }
 
 /*
 TODO list all files in <dest> that are not in <source>
-cruft {
+compare {
 	source 
 	dest
-	remove    true | false†
 }
 */
 // ---------- merge appA proto --> appA fused ---------- 
 copy {
-	source    appA/proto
-	dest      appA/fused
+	source    '../test/appA/proto'
+	dest      '../test/appA/fused'
 	overwrite older				// older | always | never†
+	mkdir true					// true† | false
+	progress regular			// none | regular† | verbose
 	// onfailure halt			// halt | continue†
-	// quiet true				// true | false†
-	// mkdir true				// true† | false
 }
 //
 //  ---------- merge appSuite proto --> appA fused ---------- 
 copy {
-	source    appSuite/proto
-	dest      appA/fused
+	source    '../test/appSuite/proto'
+	dest      '../test/appA/fused'
 	include   '*.blue'
 	include   '*.html'
 	include   '*.png'
@@ -36,34 +35,12 @@ copy {
 	overwrite older
 }
 //
-//  ---------- conditional compile appSuite code --> appA code ---------- 
+//  ---------- process blue-phrase --> html ---------- 
 recurse {
-	source    appSuite/proto/js
-	dest      appA/fused/js
-	overwrite older
-	exec      bifurcate
+	source     /musings/lib/prorenata/test/appA/fused/blue
+	dest       /musings/lib/prorenata/test/appA/fused/html
+	extension  html
+	exec       blue
+	overwrite  older
 }
-//
-//  ---------- process blue-phrase --> html
-recurse {
-	source    appA/fused/blue
-	dest      appA/fused/html
-	// output    *.html				// TODO
-	exec      blue
-	overwrite older
-}
-//
-//  ---------- transpile import/export code --> require/module ---------- 
-exim {
-	source    appA/fused/js
-	dest      appA/fused/dbg
-	rootfile  test.exim
-}
-//
-//  ---------- remove comments and whitespace ---------- 
-recurse {
-	source    appA/fused/dbg
-	dest      appA/fused/dst
-	overwrite older
-	exec      uglify
-}
+

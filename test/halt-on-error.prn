@@ -1,0 +1,9 @@
+!blue 2.0
+
+//
+//  ---------- run a sequence of commands ---------- 
+run {
+	sh ls -lia
+	sh false			// the false command returns 1
+	sh ls -lia ../../
+}

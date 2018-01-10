@@ -1,0 +1,19 @@
+!blue 2.0
+
+//  ---------- illegal attempt to copy into subdir  ---------- 
+copy {
+	source    appA/fused/blue
+	dest      appA/fused/blue/trap
+}
+
+//  ---------- legal attempt to copy to similarly named subdir  ---------- 
+copy {
+	source    appA/fused/blue
+	dest      appA/fused/blue2
+	mkdir     true
+}
+
+//  ---------- cleanup after test ---------- 
+run {
+	sh rm -rf /musings/lib/prorenata/test/appA/fused/blue2
+}

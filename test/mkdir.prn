@@ -1,0 +1,36 @@
+!blue 2.0
+
+//  ---------- block destination paths that don't exist  ---------- 
+copy {
+	source    appA/fused/blue
+	dest      appA/fused/blue2
+	mkdir     false
+}
+
+//  ---------- allow destination paths to be created  ----------
+copy {
+	source    appA/fused/blue
+	dest      appA/fused/blue3
+	mkdir     true
+}
+
+//  ---------- destination path does exist (mkdir == true) ---------- 
+copy {
+	source    appA/fused/blue
+	dest      appA/fused/blue3
+	mkdir     true
+	overwrite always
+}
+
+//  ---------- destination paths does exist (mkdir == false) ---------- 
+copy {
+	source    appA/fused/blue
+	dest      appA/fused/blue3
+	mkdir     false
+	overwrite always
+}
+
+//  ---------- cleanup after test ---------- 
+run {
+	sh rm -rf /musings/lib/prorenata/test/appA/fused/blue3
+}
