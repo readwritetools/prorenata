@@ -135,7 +135,7 @@ export default class CLI {
 
     listExamples() {
 		var s = [];
-		s.push("Sample script to copy *.html from 'foo' to 'bar'");
+		s.push("Sample using 'copy' to recursively copy files with *.html extension from 'foo' to 'bar'");
 		s.push("");
 		s.push("copy {");
 		s.push("   source  foo");
@@ -143,16 +143,25 @@ export default class CLI {
 		s.push("   include '*.html'");
 		s.push("}");
 		s.push("");
-		s.push("Sample script to recursively compile LESS into CSS from 'foo' to 'bar'");
+		s.push("Sample using 'template' and 'recurse' compile LESS into CSS from 'foo' to 'bar'");
 		s.push("template {");
-		s.push("   LESS lessc <source> <dest>");
+		s.push("   compile-css lessc <source> <dest>");
 		s.push("}");
 		s.push("recurse {");
 		s.push("   source    foo");
 		s.push("   dest      bar");
 		s.push("   include   '*.less'");
 		s.push("   extension '.css'");
-		s.push("   exec      LESS");
+		s.push("   exec      compile-css");
+		s.push("}");
+		s.push("");
+		s.push("Sample using 'template' and user-defined command to count the number of files in 'foo' with an 'html' extension");
+		s.push("template {");
+		s.push("   count-by-ext ls -l <path> | grep <ext> | wc -l");
+		s.push("}");
+		s.push("count-by-ext {");
+		s.push("   path      foo");
+		s.push("   ext       html");
 		s.push("}");
 		return s.join("\n")
     }

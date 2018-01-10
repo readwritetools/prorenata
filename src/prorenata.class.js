@@ -179,7 +179,7 @@ export default class Prorenata {
 		
 		var source = paramMap.get('source');
 		var dest = paramMap.get('dest');
-		var traceMsg = this.formatProgressMsg(cmdName, source, dest, finalArgs, 'shortForm');
+		var traceMsg = this.formatProgressMsg(cmdName, null, null, finalArgs, 'argsForm');
 		this.executeChildProcess(cmdName, finalArgs, traceMsg, paramMap);
 	}
 	
@@ -564,6 +564,11 @@ export default class Prorenata {
 	//-------------------------------------------------------------------------
 	
 	//^ Format a message suitable for the terminal to show progress
+	//> cmdName
+	//> source may be a Pfile, or null if msgType == 'argsForm'
+	//> dest   may be a Pfile, or null if msgType == 'argsForm'
+	//> finalArgs may be an array, or null if msgType == 'shortForm'
+	//> msgType is 'shortForm' or 'argsForm'
 	formatProgressMsg(cmdName, source, dest, finalArgs, msgType) {
 		expect(cmdName, 'String');
 		expect(source, ['Pfile', 'null']);
