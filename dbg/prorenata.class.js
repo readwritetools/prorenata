@@ -54,76 +54,13 @@ module.exports = class Prorenata {
 		// argv[0] node
 		// argv[1] main.js
 		// argv[2] instructionfile
-		if (process.argv.length <= 2) {
-			process.stdout.write('usage: prn scriptfile\n');
-			process.stdout.write('       prn --version\n');
-			process.stdout.write('       prn --help\n');
+		if (process.argv.length <= 2)
 			return;
-		}
-
-		if (process.argv[2] == '--version') {
-			process.stdout.write('prorenata version 1.0\n');
-			return;
-		}
-		
-		if (process.argv[2] == '--help') {
-			var line = new Array();
-			line.push("");
-			line.push("Script files contain commands in this form:");
-			line.push("");
-			line.push("command {");
-			line.push("   parameter value");
-			line.push("}");
-			line.push("");
-			line.push("commands := template | copy | recurse | compare | run");
-			line.push("   'template'  defines new commands for use with the <exec> parameter of 'recurse'");
-			line.push("   'copy'      recursively copies all files in <source> to <dest>");
-			line.push("   'recurse'   runs a template-defined command recursively over all files in <source>");
-			line.push("   'compare'   lists files that are in <source> but not in <dest>");
-			line.push("   'run'       executes an arbitrary shell command");
-			line.push("");
-			line.push("parameters := source | dest | include | exclude | extension | exec | overwrite | mkdir | progress");
-			line.push("   <source>    an absolute or relative path");
-			line.push("   <dest>      an absolute or relative path");
-			line.push("   <include>   a file pattern to include, if omitted defaults to '*'");
-			line.push("   <exclude>   a file pattern to exclude");
-			line.push("   <extension> the filename extension to apply to destination filenames");
-			line.push("   <exec>      a command name defined in the 'template' section");
-			line.push("   <overwrite> := always | older | never");
-			line.push("   <mkdir>     := true | false");
-			line.push("   <progress>  := verbose | regular | none");
-			line.push("   <sh>        a shell command to execute; used with the 'run' command");
-			line.push("");
-			line.push("Sample script to copy *.html from 'foo' to 'bar'");
-			line.push("");
-			line.push("copy {");
-			line.push("   source  foo");
-			line.push("   dest    bar");
-			line.push("   include '*.html'");
-			line.push("}");
-			line.push("");
-			line.push("Sample script to recursively compile LESS into CSS from 'foo' to 'bar'");
-			line.push("template {");
-			line.push("   LESS lessc <source> <dest>");
-			line.push("}");
-			line.push("recurse {");
-			line.push("   source    foo");
-			line.push("   dest      bar");
-			line.push("   include   '*.less'");
-			line.push("   extension '.css'");
-			line.push("   exec      LESS");
-			line.push("}");
-			line.push("");
-			line.push("");
-			var s = line.join('\n');
-			process.stdout.write(s);
-			return;
-		}
 
 		this.instructionPfile = new Pfile(process.argv[2]);
 		this.instructionPfile.makeAbsolute();
 		if (!this.instructionPfile.exists()) {
-			process.stdout.write(green(this.instructionPfile.name), ' not found\n');
+			terminal.writeToConsoleOrStderr(green(this.instructionPfile.name) + ' not found');
 			return;
 		}
 		

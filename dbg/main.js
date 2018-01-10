@@ -9,7 +9,9 @@
 //
 //=============================================================================
 
-var Prorenata = require('./prorenata.class.js');
+var CLI = require('./cli.class.js');
+var cli = new CLI();
 
-var prorenata = new Prorenata();
-prorenata.execute();
+// Read the command line and execute
+if (cli.validateOptions())
+	cli.execute();

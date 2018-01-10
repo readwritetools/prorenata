@@ -17,9 +17,10 @@
     "test02": "node ./dbg/main.js ./test/run.prn",
     "test03": "node ./dbg/main.js ./test/pro/shortnames.prn",
     "test04": "node ./dbg/main.js ./test/pro/subdir/shortnames.prn",
-    "minify": "npm run minifyA && npm run minifyB",
-    "minifyA": "node /usr/lib/node_modules/uglify-es/bin/uglifyjs ./dbg/main.js --output ./dist/main.js --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8",
-    "minifyB": "node /usr/lib/node_modules/uglify-es/bin/uglifyjs ./dbg/prorenata.class.js --output ./dist/prorenata.class.js --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8",
+    "minify": "npm run minifyA && npm run minifyB && npm run minifyC",
+    "minifyA": "node /usr/lib/node_modules/uglify-es/bin/uglifyjs ./dbg/main.js            --output ./dist/main.js            --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8",
+    "minifyB": "node /usr/lib/node_modules/uglify-es/bin/uglifyjs ./dbg/cli.class.js       --output ./dist/clie.class.js      --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8",
+    "minifyC": "node /usr/lib/node_modules/uglify-es/bin/uglifyjs ./dbg/prorenata.class.js --output ./dist/prorenata.class.js --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8",
     "bump-version": "npm version patch && git push && git push --tags"
   },
   "dependencies": {
