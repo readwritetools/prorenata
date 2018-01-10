@@ -37,8 +37,8 @@ module.exports = class CLI {
     }
     showVersion() {
         try {
-            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8'), r = JSON.parse(s);
-            return `version v${r.version}`;
+            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8'), t = JSON.parse(s);
+            return `version v${t.version}`;
         } catch (e) {
             return `version unknown ${e.message}`;
         }
@@ -71,12 +71,16 @@ module.exports = class CLI {
     }
     listExamples() {
         var e = [];
-        return e.push('Sample script to copy *.html from \'foo\' to \'bar\''), e.push(''), 
-        e.push('copy {'), e.push('   source  foo'), e.push('   dest    bar'), e.push('   include \'*.html\''), 
-        e.push('}'), e.push(''), e.push('Sample script to recursively compile LESS into CSS from \'foo\' to \'bar\''), 
-        e.push('template {'), e.push('   LESS lessc <source> <dest>'), e.push('}'), e.push('recurse {'), 
-        e.push('   source    foo'), e.push('   dest      bar'), e.push('   include   \'*.less\''), 
-        e.push('   extension \'.css\''), e.push('   exec      LESS'), e.push('}'), e.join('\n');
+        return e.push('Sample using \'copy\' to recursively copy files with *.html extension from \'foo\' to \'bar\''), 
+        e.push(''), e.push('copy {'), e.push('   source  foo'), e.push('   dest    bar'), 
+        e.push('   include \'*.html\''), e.push('}'), e.push(''), e.push('Sample using \'template\' and \'recurse\' compile LESS into CSS from \'foo\' to \'bar\''), 
+        e.push('template {'), e.push('   compile-css lessc <source> <dest>'), e.push('}'), 
+        e.push('recurse {'), e.push('   source    foo'), e.push('   dest      bar'), e.push('   include   \'*.less\''), 
+        e.push('   extension \'.css\''), e.push('   exec      compile-css'), e.push('}'), 
+        e.push(''), e.push('Sample using \'template\' and user-defined command to count the number of files in \'foo\' with an \'html\' extension'), 
+        e.push('template {'), e.push('   count-by-ext ls -l <path> | grep <ext> | wc -l'), 
+        e.push('}'), e.push('count-by-ext {'), e.push('   path      foo'), e.push('   ext       html'), 
+        e.push('}'), e.join('\n');
     }
     listHelp() {
         var e = [];

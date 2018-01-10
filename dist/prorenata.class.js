@@ -76,8 +76,9 @@ module.exports = class Prorenata {
         expect(e, 'String'), expect(r, 'String'), expect(t, [ 'GroupEntity', 'StandardEntity' ]);
         var i = this.buildParameterMap(e, t);
         this.verifyUserParams(e, i);
-        var n = r.split(' '), a = this.replaceParamsWithValues(n, i), s = i.get('source'), l = i.get('dest'), o = this.formatProgressMsg(e, s, l, a, 'shortForm');
-        this.executeChildProcess(e, a, o, i);
+        var n = r.split(' '), a = this.replaceParamsWithValues(n, i), s = (i.get('source'), 
+        i.get('dest'), this.formatProgressMsg(e, null, null, a, 'argsForm'));
+        this.executeChildProcess(e, a, s, i);
     }
     processTemplateCommand(e) {
         expect(e, 'GroupEntity');
