@@ -546,8 +546,12 @@ module.exports = class Prorenata {
 			this.regularTrace(traceMsg, paramMap);
 			var obj = ChildProcess.spawnSync(exeFile, args, options);
 			if (obj.status != 0) {
-				terminal.warning(blue(cmdName), ' halting further steps because last step returned ', red(`${obj.status}`));
-				this.halt = true;
+				if (cmdName == 'run') 
+					terminal.warning(blue(cmdName), ' return code ', red(`${obj.status}`));
+				else {
+					terminal.warning(blue(cmdName), ' halting further steps because last step returned ', red(`${obj.status}`));
+					this.halt = true;
+				}
 			}
 		}
 		catch(err) {
