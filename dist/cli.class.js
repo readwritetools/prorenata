@@ -30,15 +30,16 @@ module.exports = class CLI {
     }
     usageAndExit() {
         var e = [];
-        e.push('usage: prn [scriptfile] [options]'), e.push(''), e.push('options:'), e.push('    --version'), 
-        e.push('    --syntax     explains the prorenata syntax'), e.push('    --commands   list the builtin commands'), 
-        e.push('    --parameters list the builtin command parameters'), e.push('    --examples   show examples of p.r.n. scriptfiles'), 
-        e.push('    --help       show prorenata syntax, commands, parameters'), this.exit(e.join('\n'));
+        e.push('usage: renata [scriptfile] [options]'), e.push(''), e.push('options:'), 
+        e.push('    --version'), e.push('    --syntax     explains the prorenata syntax'), 
+        e.push('    --commands   list the builtin commands'), e.push('    --parameters list the builtin command parameters'), 
+        e.push('    --examples   show examples of p.r.n. scriptfiles'), e.push('    --help       show prorenata syntax, commands, parameters'), 
+        this.exit(e.join('\n'));
     }
     showVersion() {
         try {
-            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8'), r = JSON.parse(s);
-            return `version v${r.version}`;
+            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8'), t = JSON.parse(s);
+            return `version v${t.version}`;
         } catch (e) {
             return `version unknown ${e.message}`;
         }
@@ -85,7 +86,7 @@ module.exports = class CLI {
     }
     listHelp() {
         var e = [];
-        return e.push(''), e.push('usage: prn [scriptfile] [options]'), e.push(''), e.push(this.listSyntax()), 
+        return e.push(''), e.push('usage: renata [scriptfile] [options]'), e.push(''), e.push(this.listSyntax()), 
         e.push(''), e.push(this.listCommands()), e.push(''), e.push(this.listParameters()), 
         e.push(''), e.push(this.listExamples()), e.join('\n');
     }
