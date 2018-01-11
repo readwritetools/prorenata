@@ -14,5 +14,5 @@
 run {
 	sh npm -g bin   // show target destination
 	sh npm install -g git+ssh://root@nk021:/keep/prorenata
-	sh prn --version
+	sh renata --version
 }

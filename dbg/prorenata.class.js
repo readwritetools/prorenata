@@ -5,7 +5,7 @@
 // Copyright:    Joe Honton © 2017
 // License:      CC-BY-NC-ND 4.0
 // Initial date: Dec 31, 2017
-// Usage:        prn scriptfile
+// Usage:        renata scriptfile
 //
 //=============================================================================
 

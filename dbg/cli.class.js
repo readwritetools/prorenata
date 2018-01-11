@@ -63,7 +63,7 @@ module.exports = class CLI {
     
     usageAndExit() {
 		var s = [];
-		s.push("usage: prn [scriptfile] [options]");
+		s.push("usage: renata [scriptfile] [options]");
 		s.push("");
 		s.push("options:");
 		s.push("    --version");
@@ -170,7 +170,7 @@ module.exports = class CLI {
     listHelp() {
 		var s = [];
 		s.push("");
-		s.push("usage: prn [scriptfile] [options]");
+		s.push("usage: renata [scriptfile] [options]");
 		s.push("");
 		s.push( this.listSyntax() );
 		s.push("");
