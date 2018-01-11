@@ -550,10 +550,14 @@ export default class Prorenata {
 				var onError = 'halt';
 				if (paramMap.has('onerror'))
 					onError = paramMap.get('onerror');
-				if (onError == 'continue')
-					terminal.warning(blue(cmdName), ' continuing with return code ', red(`${obj.status}`));
+				
+				var msg = (obj.error) ? obj.error.msg : '';
+				
+				if (onError == 'continue') {
+					terminal.warning(blue(cmdName), ' continuing with return code ', yellow(`${obj.status}  `), yellow(msg));
+				}
 				else {
-					terminal.error(blue(cmdName), ' halting with return code ', red(`${obj.status}`));
+					terminal.error(blue(cmdName), ' halting with return code ', red(`${obj.status}  `), red(msg));
 					this.halt = true;
 				}
 			}
