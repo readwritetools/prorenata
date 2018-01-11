@@ -464,6 +464,7 @@ export default class Prorenata {
 				if (cmdName == 'compare') {
 					if (!dest.exists()) {
 						terminal.trace(blue(cmdName), ' ', green(this.shortDisplayFilename(source.name)), ' is in source, but ', green(this.shortDisplayFilename(dest.name)), ' is not in dest');
+						this.compareMiscount++;
 					}
 					return; // nothing else to do here
 				}
@@ -546,12 +547,8 @@ export default class Prorenata {
 			this.regularTrace(traceMsg, paramMap);
 			var obj = ChildProcess.spawnSync(exeFile, args, options);
 			if (obj.status != 0) {
-				if (cmdName == 'run') 
-					terminal.warning(blue(cmdName), ' return code ', red(`${obj.status}`));
-				else {
-					terminal.warning(blue(cmdName), ' halting further steps because last step returned ', red(`${obj.status}`));
-					this.halt = true;
-				}
+				terminal.warning(blue(cmdName), ' halting with return code ', red(`${obj.status}`));
+				this.halt = true;
 			}
 		}
 		catch(err) {
