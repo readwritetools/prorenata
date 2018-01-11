@@ -117,7 +117,7 @@ module.exports = class Prorenata {
         var r = this.buildParameterMap('compare', e);
         this.verifyBuiltinParams('compare', r), this.compareMiscount = 0;
         var t = [];
-        this.beginRecursion('compare', t, r), this.compareMiscount > 0 && this.halt;
+        this.beginRecursion('compare', t, r), this.compareMiscount > 0 && (this.halt = !0);
     }
     processRunCommand(e) {
         expect(e, 'GroupEntity');
@@ -128,7 +128,7 @@ module.exports = class Prorenata {
             if (1 == this.halt) return;
             if ('StandardEntity' == i) {
                 var n = t.name, a = t.innerText;
-                if ('progress' == n) return;
+                if ('progress' == n || 'onerror' == n) return;
                 if ('sh' != n) return void terminal.invalid(blue('run'), ' items within this command should be preceeded by ', green('sh'), ' ignoring ', red(n), ' ', red(a));
                 var s = a.split(' '), l = this.formatProgressMsg('run', null, null, s, 'argsForm');
                 this.executeChildProcess('run', s, l, r);
@@ -213,12 +213,15 @@ module.exports = class Prorenata {
         try {
             this.regularTrace(t, i);
             var l = ChildProcess.spawnSync(n, a, s);
-            0 != l.status && (terminal.warning(blue(e), ' halting with return code ', red(`${l.status}`)), 
-            this.halt = !0);
+            if (0 != l.status) {
+                var o = 'halt';
+                i.has('onerror') && (o = i.get('onerror')), 'continue' == o ? terminal.warning(blue(e), ' continuing with return code ', red(`${l.status}`)) : (terminal.error(blue(e), ' halting with return code ', red(`${l.status}`)), 
+                this.halt = !0);
+            }
         } catch (r) {
             if (-1 != r.message.indexOf('spawnSync') && -1 != r.message.indexOf('ENOENT')) terminal.abnormal(blue(e), ' executable file not found ', blue(n)); else {
-                var o = r.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
-                terminal.abnormal(blue(e), o);
+                var c = r.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
+                terminal.abnormal(blue(e), c);
             }
         }
     }
@@ -332,9 +335,10 @@ module.exports = class Prorenata {
         }
     }
     verifyBuiltinParams(e, r) {
-        if (expect(e, 'String'), expect(r, 'Map'), 'copy' == e) var t = [ 'source', 'dest' ], i = [ 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress' ]; else if ('recurse' == e) t = [ 'source', 'exec' ], 
-        i = [ 'dest', 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress' ]; else if ('compare' == e) t = [ 'source', 'dest' ], 
-        i = [ 'include', 'exclude', 'extension' ]; else if ('run' == e) t = [ 'sh' ], i = [ 'progress' ]; else terminal.logic('verifyBuiltinParams');
+        if (expect(e, 'String'), expect(r, 'Map'), 'copy' == e) var t = [ 'source', 'dest' ], i = [ 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress', 'onerror' ]; else if ('recurse' == e) t = [ 'source', 'exec' ], 
+        i = [ 'dest', 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress', 'onerror' ]; else if ('compare' == e) t = [ 'source', 'dest' ], 
+        i = [ 'include', 'exclude', 'extension', 'onerror' ]; else if ('run' == e) t = [ 'sh' ], 
+        i = [ 'progress', 'onerror' ]; else terminal.logic('verifyBuiltinParams');
         for (let [n, a] of r.entries()) t.includes(n) || i.includes(n) || terminal.warning(blue(e), ' does not use the parameter ', red(`<${n}>`), ', ignorning ', red(a));
         for (let i = 0; i < t.length; i++) r.has(t[i]) || terminal.warning(blue(e), ' expects a parameter named ', red(`<${t[i]}>`));
     }

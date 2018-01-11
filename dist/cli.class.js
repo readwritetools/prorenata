@@ -37,8 +37,8 @@ module.exports = class CLI {
     }
     showVersion() {
         try {
-            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8'), t = JSON.parse(s);
-            return `version v${t.version}`;
+            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8'), r = JSON.parse(s);
+            return `version v${r.version}`;
         } catch (e) {
             return `version unknown ${e.message}`;
         }
@@ -57,17 +57,18 @@ module.exports = class CLI {
     }
     listParameters() {
         var e = [];
-        return e.push('\'recurse\'  parameters := source* | exec* | include | exclude | extension | overwrite | mkdir | progress | dest'), 
-        e.push('\'compare\'  parameters := source* | dest* | include | exclude | extension'), 
-        e.push('\'copy\'     parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | progress'), 
-        e.push('\'run\'      parameters := sh* | progress'), e.push('\'template\' has definitions (not parameters) for use with the <exec> parameter of a \'recurse\' command'), 
+        return e.push('\'recurse\'  parameters := source* | exec* | include | exclude | extension | overwrite | mkdir | progress | dest | onerror'), 
+        e.push('\'compare\'  parameters := source* | dest* | include | exclude | extension | onerror'), 
+        e.push('\'copy\'     parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | progress | onerror'), 
+        e.push('\'run\'      parameters := sh* | progress | onerror'), e.push('\'template\' has definitions (not parameters) for use with the <exec> parameter of a \'recurse\' command'), 
         e.push(''), e.push('parameters :='), e.push('   <source>    an absolute or relative path'), 
         e.push('   <dest>      an absolute or relative path'), e.push('   <include>   a file pattern to include, if omitted defaults to \'*\''), 
         e.push('   <exclude>   a file pattern to exclude'), e.push('   <extension> the filename extension to apply to destination filenames'), 
         e.push('   <exec>      a command name defined in the \'template\' section'), e.push('   <overwrite> := always | older | never†'), 
         e.push('   <mkdir>     := true | false†'), e.push('   <progress>  := verbose | regular† | none'), 
-        e.push('   <sh>        a shell command to execute'), e.push(''), e.push('* required parameter'), 
-        e.push('† optional parameter default value'), e.join('\n');
+        e.push('   <onerror>   := continue | halt†'), e.push('   <sh>        a shell command to execute'), 
+        e.push(''), e.push('* required parameter'), e.push('† optional parameter default value'), 
+        e.join('\n');
     }
     listExamples() {
         var e = [];
