@@ -208,7 +208,8 @@ module.exports = class Prorenata {
         expect(e, 'String'), expect(r, 'Array'), expect(t, 'String'), expect(i, 'Map');
         var n = r[0], a = (new Pfile(n), r.slice(1)), s = {
             cwd: this.instructionPfile.getPath(),
-            stdio: [ 0, 1, 2 ]
+            stdio: [ 0, 1, 2 ],
+            shell: !0
         };
         try {
             this.regularTrace(t, i);
