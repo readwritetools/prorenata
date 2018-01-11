@@ -1,6 +1,6 @@
 //=============================================================================
 //
-// File:         prorenate/src/prorenata.class.js
+// File:         prorenata/src/prorenata.class.js
 // Language:     ECMAScript 2015
 // Copyright:    Joe Honton © 2017
 // License:      CC-BY-NC-ND 4.0
@@ -36,6 +36,7 @@ export default class Prorenata {
 		this.commands = new Map();			// cmd (String) --> cmdTemplate (String)
 		this.privateJoinChar = '|';			// use this to join and split multiple 'include' and 'exclude' params internally treated as one
 		this.halt = false;					// halt further execution
+		this.compareMiscount = 0;			// number of files that don't match in 'compare'
 		this.setup();
 		Object.seal(this);
 	}
@@ -251,8 +252,11 @@ export default class Prorenata {
 		var paramMap = this.buildParameterMap('compare', compareEntity);
 		this.verifyBuiltinParams('compare', paramMap);
 
+		this.compareMiscount = 0;
 		var processArgs = [];
 		this.beginRecursion('compare', processArgs, paramMap);
+		if (this.compareMiscount > 0)
+			this.halt;
 	}
 
 	//^ The 'run' command
@@ -421,8 +425,10 @@ export default class Prorenata {
 				if (mkDir == 'true')
 					dest.mkDir();
 				if (!dest.exists()) {
-					if (cmdName == 'compare')
+					if (cmdName == 'compare') {
 						terminal.trace(blue(cmdName), ' ', green(this.shortDisplayFilename(dest.name)), ' does not exist in dest');
+						this.compareMiscount++;
+					}
 					else
 						terminal.invalid(blue(cmdName), ' destination path ', green(this.shortDisplayFilename(dest.name)), ' does not exist, and ', green('mkdir'), ' is ', green('false'));
 					return;

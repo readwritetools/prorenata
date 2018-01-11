@@ -11,7 +11,13 @@
 //=============================================================================
 
 template {
-	minify     node /usr/lib/node_modules/uglify-es/bin/uglifyjs <source> --output <dest> --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8 		/* npm install -g uglify-es */
+ 	/* npm install -g uglify-es */
+ 	minify     uglifyjs <source> --output <dest> --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8
+}
+
+// ---------- check make sure repo has no uncommited work ---------- 
+run {
+	sh git diff-index --quiet HEAD
 }
 
 //

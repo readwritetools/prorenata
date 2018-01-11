@@ -143,7 +143,7 @@ module.exports = class CLI {
 		s.push("   include '*.html'");
 		s.push("}");
 		s.push("");
-		s.push("Sample using 'template' and 'recurse' compile LESS into CSS from 'foo' to 'bar'");
+		s.push("Sample using 'template' and 'recurse' to compile LESS into CSS from 'foo' to 'bar'");
 		s.push("template {");
 		s.push("   compile-css lessc <source> <dest>");
 		s.push("}");
