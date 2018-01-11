@@ -186,7 +186,8 @@ module.exports = class Prorenata {
                     var b = n.get('extension');
                     '.' == b.charAt(0) && (b = b.substr(1)), r.replaceExtension(b);
                 }
-                if ('compare' == t) return void (r.exists() || terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(e.name)), ' is in source, but ', green(this.shortDisplayFilename(r.name)), ' is not in dest'));
+                if ('compare' == t) return void (r.exists() || (terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(e.name)), ' is in source, but ', green(this.shortDisplayFilename(r.name)), ' is not in dest'), 
+                this.compareMiscount++));
                 var y = this.allowOverwrite(e, r, l);
                 if (y < 0) return void (-230 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' same as ') + green(this.shortDisplayFilename(r.name)), n) : -240 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' older than ') + green(this.shortDisplayFilename(r.name)), n) : -300 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(r.name)) + blue(' already exists'), n) : terminal.logic(`allowOverwrite = ${y}`));
             }
