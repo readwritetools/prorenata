@@ -183,17 +183,17 @@ module.exports = class Prorenata {
             if (this.isExcluded(e, t, s, n)) return;
             if (null != r) {
                 if (n.has('extension')) {
-                    var b = n.get('extension');
-                    '.' == b.charAt(0) && (b = b.substr(1)), r.replaceExtension(b);
+                    var y = n.get('extension');
+                    '.' == y.charAt(0) && (y = y.substr(1)), r.replaceExtension(y);
                 }
                 if ('compare' == t) return void (r.exists() || (terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(e.name)), ' is in source, but ', green(this.shortDisplayFilename(r.name)), ' is not in dest'), 
                 this.compareMiscount++));
-                var y = this.allowOverwrite(e, r, l);
-                if (y < 0) return void (-230 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' same as ') + green(this.shortDisplayFilename(r.name)), n) : -240 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' older than ') + green(this.shortDisplayFilename(r.name)), n) : -300 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(r.name)) + blue(' already exists'), n) : terminal.logic(`allowOverwrite = ${y}`));
+                var b = this.allowOverwrite(e, r, l);
+                if (b < 0) return void (-230 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' same as ') + green(this.shortDisplayFilename(r.name)), n) : -240 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' older than ') + green(this.shortDisplayFilename(r.name)), n) : -300 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(r.name)) + blue(' already exists'), n) : terminal.logic(`allowOverwrite = ${b}`));
             }
             n.set('source', e.name), n.set('dest', null == r ? null : r.name);
-            var x = this.replaceParamsWithValues(i, n), P = this.formatProgressMsg(t, e, r, x, 'shortForm');
-            this.executeChildProcess(t, x, P, n);
+            var x = this.replaceParamsWithValues(i, n), w = this.formatProgressMsg(t, e, r, x, 'shortForm');
+            this.executeChildProcess(t, x, w, n);
         } else terminal.warning(blue(t), ' ', e.name, red(' NOT FOUND'));
     }
     regularTrace(e, r) {
@@ -215,13 +215,15 @@ module.exports = class Prorenata {
             var l = ChildProcess.spawnSync(n, a, s);
             if (0 != l.status) {
                 var o = 'halt';
-                i.has('onerror') && (o = i.get('onerror')), 'continue' == o ? terminal.warning(blue(e), ' continuing with return code ', red(`${l.status}`)) : (terminal.error(blue(e), ' halting with return code ', red(`${l.status}`)), 
+                i.has('onerror') && (o = i.get('onerror'));
+                var c = l.error ? l.error.msg : '';
+                'continue' == o ? terminal.warning(blue(e), ' continuing with return code ', yellow(`${l.status}  `), yellow(c)) : (terminal.error(blue(e), ' halting with return code ', red(`${l.status}  `), red(c)), 
                 this.halt = !0);
             }
         } catch (r) {
             if (-1 != r.message.indexOf('spawnSync') && -1 != r.message.indexOf('ENOENT')) terminal.abnormal(blue(e), ' executable file not found ', blue(n)); else {
-                var c = r.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
-                terminal.abnormal(blue(e), c);
+                var u = r.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
+                terminal.abnormal(blue(e), u);
             }
         }
     }
