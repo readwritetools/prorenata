@@ -551,7 +551,7 @@ module.exports = class Prorenata {
 				if (paramMap.has('onerror'))
 					onError = paramMap.get('onerror');
 				
-				var msg = (obj.error) ? obj.error.msg : '';
+				var msg = (obj.error && obj.error.message) ? obj.error.message : '';
 				
 				if (onError == 'continue') {
 					terminal.warning(blue(cmdName), ' continuing with return code ', yellow(`${obj.status}  `), yellow(msg));
