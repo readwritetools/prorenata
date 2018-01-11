@@ -167,13 +167,13 @@ module.exports = class Prorenata {
             if (null != r) {
                 var u = r.name.indexOf(e.name);
                 if (0 == u) {
-                    var m = e.name.length, p = r.name.charAt(m);
-                    if ('/' == p) return void terminal.invalid(blue(t), ' source path ', green(e.name), ' and destination path ', green(r.name), ' overlap. Halting to prevent infinite loop.');
+                    var m = e.name.length, h = r.name.charAt(m);
+                    if ('/' == h) return void terminal.invalid(blue(t), ' source path ', green(e.name), ' and destination path ', green(r.name), ' overlap. Halting to prevent infinite loop.');
                 }
                 if ('true' == o && r.mkDir(), !r.exists()) return void ('compare' == t ? (terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(r.name)), ' does not exist in dest'), 
                 this.compareMiscount++) : terminal.invalid(blue(t), ' destination path ', green(this.shortDisplayFilename(r.name)), ' does not exist, and ', green('mkdir'), ' is ', green('false')));
             }
-            var h = new Bunch(e.name, '*', Bunch.FILE + Bunch.DIRECTORY), d = h.find(!1);
+            var p = new Bunch(e.name, '*', Bunch.FILE + Bunch.DIRECTORY), d = p.find(!1);
             for (let u = 0; u < d.length; u++) {
                 var g = d[u], f = new Pfile(e).addPath(g), v = null == r ? null : new Pfile(r).addPath(g);
                 this.recurseFileSystem(f, v, t, i, n, a, s, l, o, c + 1);
@@ -213,8 +213,8 @@ module.exports = class Prorenata {
         try {
             this.regularTrace(t, i);
             var l = ChildProcess.spawnSync(n, a, s);
-            0 != l.status && ('run' == e ? terminal.warning(blue(e), ' return code ', red(`${l.status}`)) : (terminal.warning(blue(e), ' halting further steps because last step returned ', red(`${l.status}`)), 
-            this.halt = !0));
+            0 != l.status && (terminal.warning(blue(e), ' halting with return code ', red(`${l.status}`)), 
+            this.halt = !0);
         } catch (r) {
             if (-1 != r.message.indexOf('spawnSync') && -1 != r.message.indexOf('ENOENT')) terminal.abnormal(blue(e), ' executable file not found ', blue(n)); else {
                 var o = r.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
