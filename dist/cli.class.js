@@ -73,7 +73,7 @@ module.exports = class CLI {
         var e = [];
         return e.push('Sample using \'copy\' to recursively copy files with *.html extension from \'foo\' to \'bar\''), 
         e.push(''), e.push('copy {'), e.push('   source  foo'), e.push('   dest    bar'), 
-        e.push('   include \'*.html\''), e.push('}'), e.push(''), e.push('Sample using \'template\' and \'recurse\' compile LESS into CSS from \'foo\' to \'bar\''), 
+        e.push('   include \'*.html\''), e.push('}'), e.push(''), e.push('Sample using \'template\' and \'recurse\' to compile LESS into CSS from \'foo\' to \'bar\''), 
         e.push('template {'), e.push('   compile-css lessc <source> <dest>'), e.push('}'), 
         e.push('recurse {'), e.push('   source    foo'), e.push('   dest      bar'), e.push('   include   \'*.less\''), 
         e.push('   extension \'.css\''), e.push('   exec      compile-css'), e.push('}'), 

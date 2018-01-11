@@ -7,7 +7,7 @@ var gray = terminal.gray, red = terminal.red, green = terminal.green, yellow = t
 module.exports = class Prorenata {
     constructor() {
         this.instructionPfile = null, this.root = null, this.commands = new Map(), this.privateJoinChar = '|', 
-        this.halt = !1, this.setup(), Object.seal(this);
+        this.halt = !1, this.compareMiscount = 0, this.setup(), Object.seal(this);
     }
     setup() {
         this.commands.set('template', 'builtin'), this.commands.set('copy', 'builtin'), 
@@ -115,9 +115,9 @@ module.exports = class Prorenata {
     processCompareCommand(e) {
         expect(e, 'GroupEntity');
         var r = this.buildParameterMap('compare', e);
-        this.verifyBuiltinParams('compare', r);
+        this.verifyBuiltinParams('compare', r), this.compareMiscount = 0;
         var t = [];
-        this.beginRecursion('compare', t, r);
+        this.beginRecursion('compare', t, r), this.compareMiscount > 0 && this.halt;
     }
     processRunCommand(e) {
         expect(e, 'GroupEntity');
@@ -170,7 +170,8 @@ module.exports = class Prorenata {
                     var m = e.name.length, p = r.name.charAt(m);
                     if ('/' == p) return void terminal.invalid(blue(t), ' source path ', green(e.name), ' and destination path ', green(r.name), ' overlap. Halting to prevent infinite loop.');
                 }
-                if ('true' == o && r.mkDir(), !r.exists()) return void ('compare' == t ? terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(r.name)), ' does not exist in dest') : terminal.invalid(blue(t), ' destination path ', green(this.shortDisplayFilename(r.name)), ' does not exist, and ', green('mkdir'), ' is ', green('false')));
+                if ('true' == o && r.mkDir(), !r.exists()) return void ('compare' == t ? (terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(r.name)), ' does not exist in dest'), 
+                this.compareMiscount++) : terminal.invalid(blue(t), ' destination path ', green(this.shortDisplayFilename(r.name)), ' does not exist, and ', green('mkdir'), ' is ', green('false')));
             }
             var h = new Bunch(e.name, '*', Bunch.FILE + Bunch.DIRECTORY), d = h.find(!1);
             for (let u = 0; u < d.length; u++) {
