@@ -7,7 +7,7 @@
   "private": true,
   "main": "./dist/main.js",
   "bin": {
-    "prn": "./bin/prorenata"
+    "renata": "./bin/renata"
   },
   "scripts": {
     "build": "npm run exim && npm run app",

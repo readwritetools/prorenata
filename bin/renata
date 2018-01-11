@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 //=============================================================================
 //
-// File:         prorenate/src/prorenata
+// File:         prorenata/src/renata
 // Language:     ECMAScript 2015
 // Copyright:    Joe Honton © 2017
 // License:      CC-BY-NC-ND 4.0
 // Initial date: Dec 31, 2017
-// Usage:        main entry point
+// Usage:        renata [scriptfile] [options]
 //
 //=============================================================================
 
