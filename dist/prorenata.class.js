@@ -212,8 +212,8 @@ module.exports = class Prorenata {
         try {
             this.regularTrace(t, i);
             var l = ChildProcess.spawnSync(n, a, s);
-            0 != l.status && (terminal.warning(blue(e), ' halting further steps because last step returned ', red(`${l.status}`)), 
-            this.halt = !0);
+            0 != l.status && ('run' == e ? terminal.warning(blue(e), ' return code ', red(`${l.status}`)) : (terminal.warning(blue(e), ' halting further steps because last step returned ', red(`${l.status}`)), 
+            this.halt = !0));
         } catch (r) {
             if (-1 != r.message.indexOf('spawnSync') && -1 != r.message.indexOf('ENOENT')) terminal.abnormal(blue(e), ' executable file not found ', blue(n)); else {
                 var o = r.message.replace('spawnSync', 'Couldn\'t start').replace('ENOENT', '(No such file or directory)');
