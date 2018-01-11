@@ -1,7 +1,7 @@
 {
   "name": "prorenata",
   "description": "Script a sequence of commands that work on deep file paths",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "author": "Joe Honton",
   "license": "CC-BY-NC-ND 4.0",
   "private": true,
