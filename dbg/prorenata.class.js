@@ -256,7 +256,7 @@ module.exports = class Prorenata {
 		var processArgs = [];
 		this.beginRecursion('compare', processArgs, paramMap);
 		if (this.compareMiscount > 0)
-			this.halt;
+			this.halt = true;
 	}
 
 	//^ The 'run' command
@@ -277,7 +277,7 @@ module.exports = class Prorenata {
 			if ( type == 'StandardEntity') {
 				var shKeyword = childEntity.name;
 				var shCommand = childEntity.innerText;
-				if (shKeyword == 'progress') {
+				if (shKeyword == 'progress' || shKeyword == 'onerror') {
 					return;
 				}
 				else if (shKeyword != 'sh') {
@@ -547,8 +547,15 @@ module.exports = class Prorenata {
 			this.regularTrace(traceMsg, paramMap);
 			var obj = ChildProcess.spawnSync(exeFile, args, options);
 			if (obj.status != 0) {
-				terminal.warning(blue(cmdName), ' halting with return code ', red(`${obj.status}`));
-				this.halt = true;
+				var onError = 'halt';
+				if (paramMap.has('onerror'))
+					onError = paramMap.get('onerror');
+				if (onError == 'continue')
+					terminal.warning(blue(cmdName), ' continuing with return code ', red(`${obj.status}`));
+				else {
+					terminal.error(blue(cmdName), ' halting with return code ', red(`${obj.status}`));
+					this.halt = true;
+				}
 			}
 		}
 		catch(err) {
@@ -857,19 +864,19 @@ module.exports = class Prorenata {
 		
 		if (cmd == 'copy') {
 			var requiredParams = ['source', 'dest'];
-			var optionalParams = ['include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress'];
+			var optionalParams = ['include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress', 'onerror'];
 		}
 		else if (cmd == 'recurse') {
 			var requiredParams = ['source', 'exec'];
-			var optionalParams = ['dest', 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress'];
+			var optionalParams = ['dest', 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress', 'onerror'];
 		}
 		else if (cmd == 'compare') {
 			var requiredParams = ['source', 'dest'];
-			var optionalParams = ['include', 'exclude', 'extension'];
+			var optionalParams = ['include', 'exclude', 'extension', 'onerror'];
 		}
 		else if (cmd == 'run') {
 			var requiredParams = ['sh'];
-			var optionalParams = ['progress'];
+			var optionalParams = ['progress', 'onerror'];
 		}
 		else
 			terminal.logic('verifyBuiltinParams');

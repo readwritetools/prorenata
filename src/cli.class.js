@@ -110,10 +110,10 @@ export default class CLI {
     
     listParameters() {
 		var s = [];
-		s.push("'recurse'  parameters := source* | exec* | include | exclude | extension | overwrite | mkdir | progress | dest");
-		s.push("'compare'  parameters := source* | dest* | include | exclude | extension");
-		s.push("'copy'     parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | progress");
-		s.push("'run'      parameters := sh* | progress");
+		s.push("'recurse'  parameters := source* | exec* | include | exclude | extension | overwrite | mkdir | progress | dest | onerror");
+		s.push("'compare'  parameters := source* | dest* | include | exclude | extension | onerror");
+		s.push("'copy'     parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | progress | onerror");
+		s.push("'run'      parameters := sh* | progress | onerror");
 		s.push("'template' has definitions (not parameters) for use with the <exec> parameter of a 'recurse' command");
 		s.push("");
 		s.push("parameters :=");
@@ -126,6 +126,7 @@ export default class CLI {
 		s.push("   <overwrite> := always | older | never†");
 		s.push("   <mkdir>     := true | false†");
 		s.push("   <progress>  := verbose | regular† | none");
+		s.push("   <onerror>   := continue | halt†");
 		s.push("   <sh>        a shell command to execute");
 		s.push("");
 		s.push("* required parameter");

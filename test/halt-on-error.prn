@@ -1,9 +1,18 @@
 !blue 2.0
 
-//
-//  ---------- run a sequence of commands ---------- 
+
+//  ---------- continue on error ---------- 
 run {
 	sh ls -lia
 	sh false			// the false command returns 1
 	sh ls -lia ../../
+	onerror continue
+}
+
+//  ---------- halt on error ---------- 
+run {
+	sh ls -lia
+	sh false			// the false command returns 1
+	sh ls -lia ../../
+	onerror halt
 }

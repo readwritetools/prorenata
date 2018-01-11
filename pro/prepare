@@ -12,5 +12,6 @@
 
 // ---------- install node module dependencies ---------- 
 run {
+	sh git pull origin
 	sh npm install joezone bluephrase
 }

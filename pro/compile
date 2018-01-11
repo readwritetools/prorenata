@@ -11,13 +11,13 @@
 //=============================================================================
 
 template {
-	exim 		 node /musings/lib/exim/src/rewrite.js <source> <dest> <rootfile>
+	eximjs 		 eximjs <source> <dest>
 }
 
 // ---------- rewrite export/import (src) ---------- 
-exim {
+recurse {
 	source    '../src'
 	dest      '../dbg'
-	rootfile  main.js
-	//overwrite older					// this will only become effective when exim becomes eximf
+	overwrite older
+	exec      eximjs
 }

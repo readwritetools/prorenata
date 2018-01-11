@@ -21,6 +21,6 @@ run {
 	//sh node ../dbg/main.js ../test/mkdir.prn
 	//sh node ../dbg/main.js ../test/absolute.prn
 	//sh node ../dbg/main.js ../test/recurse-no-dest.prn
-	//sh node ../dbg/main.js ../test/halt-on-error.prn
-	sh node ../dbg/main.js ../test/compare.prn
+	sh node ../dbg/main.js ../test/halt-on-error.prn
+	//sh node ../dbg/main.js ../test/compare.prn
 }
