@@ -216,7 +216,7 @@ module.exports = class Prorenata {
             if (0 != l.status) {
                 var o = 'halt';
                 i.has('onerror') && (o = i.get('onerror'));
-                var c = l.error ? l.error.msg : '';
+                var c = l.error && l.error.message ? l.error.message : '';
                 'continue' == o ? terminal.warning(blue(e), ' continuing with return code ', yellow(`${l.status}  `), yellow(c)) : (terminal.error(blue(e), ' halting with return code ', red(`${l.status}  `), red(c)), 
                 this.halt = !0);
             }
