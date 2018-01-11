@@ -540,7 +540,8 @@ module.exports = class Prorenata {
 		var args = finalArgs.slice(1);
 		var options = {
 			cwd: this.instructionPfile.getPath(),
-			stdio: [0,1,2]
+			stdio: [0,1,2],
+			shell: true
 		};
 		
 		try {
