@@ -8,11 +8,13 @@ copy {
 	include   '*.css'
 	include   '*.blue'
 	mkdir     true
-	progress none			// none | regular† | verbose
+	progress regular			// none | regular† | verbose
 }
 
+/*
 //  ---------- cleanup after test ---------- 
 run {
 	sh rm -rf /musings/lib/prorenata/test/appA/fused2
 	progress regular
 }
+*/

@@ -228,7 +228,7 @@ module.exports = class Prorenata {
 		// 'cp --preserve <source> <dest>'
 		var processArgs = [
 			'cp',
-			'--preserve',
+			'--preserve=mode,ownership',	// --preserve=mode,ownership,timestamps
 			'<source>',
 			'<dest>'
 			];
