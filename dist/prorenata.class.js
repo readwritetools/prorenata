@@ -12,11 +12,11 @@ module.exports = class Prorenata {
     setup() {
         this.commands.set('template', 'builtin'), this.commands.set('copy', 'builtin'), 
         this.commands.set('recurse', 'builtin'), this.commands.set('compare', 'builtin'), 
-        this.commands.set('run', 'builtin');
+        this.commands.set('clean', 'builtin'), this.commands.set('run', 'builtin');
     }
     execute() {
         process.argv.length <= 2 || (this.instructionPfile = new Pfile(process.argv[2]), 
-        this.instructionPfile.makeAbsolute(), this.instructionPfile.exists() ? (this.readInstructions(), 
+        this.instructionPfile.makeAbsolute(), this.instructionPfile.exists() ? this.instructionPfile.isDirectory() ? terminal.writeToConsoleOrStderr(green(this.instructionPfile.name) + ' is a directory, expected an instruction file') : (this.readInstructions(), 
         this.processInstructions()) : terminal.writeToConsoleOrStderr(green(this.instructionPfile.name) + ' not found'));
     }
     readInstructions() {
@@ -62,6 +62,10 @@ module.exports = class Prorenata {
 
           case 'compare':
             this.processCompareCommand(r);
+            break;
+
+          case 'clean':
+            this.processCleanCommand(r);
             break;
 
           case 'run':
@@ -118,6 +122,36 @@ module.exports = class Prorenata {
         this.verifyBuiltinParams('compare', r), this.compareMiscount = 0;
         var t = [];
         this.beginRecursion('compare', t, r), this.compareMiscount > 0 && (this.halt = !0);
+    }
+    processCleanCommand(e) {
+        expect(e, 'GroupEntity');
+        var r = this.buildParameterMap('clean', e);
+        this.verifyBuiltinParams('clean', r), expect(this.instructionPfile, 'Pfile');
+        var t = this.instructionPfile.getPath();
+        if (r.has('trigger')) {
+            var i = new Pfile(r.get('trigger'));
+            if (i.isAbsolutePath() || (i = new Pfile(t).addPath(r.get('trigger'))), i.isDirectory()) this.regularTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(i.name)) + ' is a directory, expected a filename', r); else if (i.isFile()) {
+                var n = new Array();
+                r.has('dependent') && (n = r.get('dependent').split(this.privateJoinChar), expect(n, 'Array'));
+                for (let e = 0; e < n.length; e++) {
+                    if ('' == n[e]) return void this.regularTrace(blue('clean') + red(' <dependent> ') + 'is not specified', r);
+                    var a = new Pfile(n[e]);
+                    if (a.isAbsolutePath() || (a = new Pfile(t).addPath(n[e])), a.isDirectory()) {
+                        var s = new Bunch(a.name, '*', Bunch.FILE), l = s.find(!1);
+                        for (let e = 0; e < l.length; e++) {
+                            var o = new Pfile(a).addPath(l[e]);
+                            this.removeOlder(i, o, r);
+                        }
+                    } else a.isFile() && this.removeOlder(i, a, r);
+                }
+            } else this.verboseTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(i.name)) + ' does not exist', r);
+        } else this.regularTrace(blue('clean') + ' no ' + red('<trigger>') + ' parameter provided, can not continue', r);
+    }
+    removeOlder(e, r, t) {
+        expect(e, 'Pfile'), expect(r, 'Pfile');
+        var i = this.compareTimestamps(e, r, 'older');
+        -400 == i ? this.regularTrace(blue('clean') + ' ignoring because trigger ' + green(this.shortDisplayFilename(e.name)) + ' does not exist', t) : 220 == i && (this.verboseTrace(blue('clean') + ' removing ' + green(this.shortDisplayFilename(r.name)), t), 
+        r.isFile() && r.unlinkFile());
     }
     processRunCommand(e) {
         expect(e, 'GroupEntity');
@@ -183,26 +217,18 @@ module.exports = class Prorenata {
             if (this.isExcluded(e, t, s, n)) return;
             if (null != r) {
                 if (n.has('extension')) {
-                    var y = n.get('extension');
-                    '.' == y.charAt(0) && (y = y.substr(1)), r.replaceExtension(y);
+                    var b = n.get('extension');
+                    '.' == b.charAt(0) && (b = b.substr(1)), r.replaceExtension(b);
                 }
                 if ('compare' == t) return void (r.exists() || (terminal.trace(blue(t), ' ', green(this.shortDisplayFilename(e.name)), ' is in source, but ', green(this.shortDisplayFilename(r.name)), ' is not in dest'), 
                 this.compareMiscount++));
-                var b = this.allowOverwrite(e, r, l);
-                if (b < 0) return void (-230 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' same as ') + green(this.shortDisplayFilename(r.name)), n) : -240 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' older than ') + green(this.shortDisplayFilename(r.name)), n) : -300 == b ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(r.name)) + blue(' already exists'), n) : terminal.logic(`allowOverwrite = ${b}`));
+                var y = this.compareTimestamps(e, r, l);
+                if (y < 0) return void (-230 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' same as ') + green(this.shortDisplayFilename(r.name)), n) : -240 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(e.name)) + blue(' older than ') + green(this.shortDisplayFilename(r.name)), n) : -300 == y ? this.verboseTrace(blue(t) + ' not overwriting because ' + green(this.shortDisplayFilename(r.name)) + blue(' already exists'), n) : -400 == y ? this.verboseTrace(blue(t) + ' ignoring because ' + green(this.shortDisplayFilename(e.name)) + blue(' does not exist'), n) : terminal.logic(`compareTimestamps = ${y}`));
             }
             n.set('source', e.name), n.set('dest', null == r ? null : r.name);
-            var x = this.replaceParamsWithValues(i, n), w = this.formatProgressMsg(t, e, r, x, 'shortForm');
-            this.executeChildProcess(t, x, w, n);
+            var x = this.replaceParamsWithValues(i, n), P = this.formatProgressMsg(t, e, r, x, 'shortForm');
+            this.executeChildProcess(t, x, P, n);
         } else terminal.warning(blue(t), ' ', e.name, red(' NOT FOUND'));
-    }
-    regularTrace(e, r) {
-        if (expect(e, 'String'), expect(r, 'Map'), r.has('progress')) var t = r.get('progress'); else t = 'regular';
-        'regular' != t && 'verbose' != t || terminal.trace(e);
-    }
-    verboseTrace(e, r) {
-        if (expect(e, 'String'), expect(r, 'Map'), r.has('progress')) var t = r.get('progress'); else t = 'regular';
-        'verbose' == t && terminal.trace(e);
     }
     executeChildProcess(e, r, t, i) {
         expect(e, 'String'), expect(r, 'Array'), expect(t, 'String'), expect(i, 'Map');
@@ -279,18 +305,19 @@ module.exports = class Prorenata {
         }
         return !1;
     }
-    allowOverwrite(e, r, t) {
-        if (expect(e, 'Pfile'), expect(r, 'Pfile'), expect(t, 'String'), 'always' == t) return 100;
+    compareTimestamps(e, r, t) {
+        if (expect(e, 'Pfile'), expect(r, 'Pfile'), expect(t, 'String'), !e.exists()) return -400;
+        if ('always' == t) return 100;
         if ('older' == t) {
             if (r.exists()) {
                 var i = fs.statSync(r.name).mtime.getTime(), n = fs.statSync(e.name).mtime.getTime();
-                return n > i ? 220 : n == i ? -230 : n < i ? -240 : (terminal.logic('allowOverwrite'), 
+                return n > i ? 220 : n == i ? -230 : n < i ? -240 : (terminal.logic('compareTimestamps'), 
                 -250);
             }
             return 210;
         }
         return 'never' == t ? r.exists() ? -300 : 300 : (terminal.logic('Unhandled overwriteRule ', red(t)), 
-        -400);
+        -500);
     }
     buildParameterMap(e, r) {
         expect(e, 'String'), expect(r, [ 'GroupEntity', 'StandardEntity' ]);
@@ -316,6 +343,9 @@ module.exports = class Prorenata {
                     } else if ('exclude' == o) {
                         u = t.has('exclude') ? t.get('exclude') + this.privateJoinChar + c : c;
                         t.set(o, u);
+                    } else if ('dependent' == o) {
+                        u = t.has('dependent') ? t.get('dependent') + this.privateJoinChar + c : c;
+                        t.set(o, u);
                     } else 'overwrite' == o ? ('older' != c && 'always' != c && 'never' != c && terminal.warning(blue(e), ' the <overwrite> parameter is ', red(c), ' only ', blue('always | older | never'), ' are meaningful'), 
                     t.set(o, c)) : t.set(o, c);
                 } else terminal.logic('Unhandled entity type ', green(n), ' in buildParameterMap');
@@ -340,8 +370,8 @@ module.exports = class Prorenata {
     verifyBuiltinParams(e, r) {
         if (expect(e, 'String'), expect(r, 'Map'), 'copy' == e) var t = [ 'source', 'dest' ], i = [ 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress', 'onerror' ]; else if ('recurse' == e) t = [ 'source', 'exec' ], 
         i = [ 'dest', 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress', 'onerror' ]; else if ('compare' == e) t = [ 'source', 'dest' ], 
-        i = [ 'include', 'exclude', 'extension', 'onerror' ]; else if ('run' == e) t = [ 'sh' ], 
-        i = [ 'progress', 'onerror' ]; else terminal.logic('verifyBuiltinParams');
+        i = [ 'include', 'exclude', 'extension', 'onerror' ]; else if ('clean' == e) t = [ 'trigger', 'dependent' ], 
+        i = [ 'progress', 'onerror' ]; else if ('run' == e) t = [ 'sh' ], i = [ 'progress', 'onerror' ]; else terminal.logic('verifyBuiltinParams');
         for (let [n, a] of r.entries()) t.includes(n) || i.includes(n) || terminal.warning(blue(e), ' does not use the parameter ', red(`<${n}>`), ', ignorning ', red(a));
         for (let i = 0; i < t.length; i++) r.has(t[i]) || terminal.warning(blue(e), ' expects a parameter named ', red(`<${t[i]}>`));
     }
@@ -366,5 +396,13 @@ module.exports = class Prorenata {
     removeQuotedDelimiters(e) {
         var r = (e = e.trim()).charAt(0), t = e.charAt(e.length - 1);
         return r != t || '\'' != r && '"' != r ? e : e.substr(1, e.length - 2);
+    }
+    regularTrace(e, r) {
+        if (expect(e, 'String'), expect(r, 'Map'), r.has('progress')) var t = r.get('progress'); else t = 'regular';
+        'regular' != t && 'verbose' != t || terminal.trace(e);
+    }
+    verboseTrace(e, r) {
+        if (expect(e, 'String'), expect(r, 'Map'), r.has('progress')) var t = r.get('progress'); else t = 'regular';
+        'verbose' == t && terminal.trace(e);
     }
 };
