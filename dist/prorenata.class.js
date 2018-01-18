@@ -101,7 +101,7 @@ module.exports = class Prorenata {
         expect(e, 'GroupEntity');
         var r = this.buildParameterMap('copy', e);
         this.verifyBuiltinParams('copy', r);
-        var t = [ 'cp', '--preserve', '<source>', '<dest>' ];
+        var t = [ 'cp', '--preserve=mode,ownership', '<source>', '<dest>' ];
         this.beginRecursion('copy', t, r);
     }
     processRecurseCommand(e) {
