@@ -144,13 +144,13 @@ module.exports = class Prorenata {
                         }
                     } else a.isFile() && this.removeOlder(i, a, r);
                 }
-            } else this.verboseTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(i.name)) + ' does not exist', r);
+            } else this.regularTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(i.name)) + ' does not exist', r);
         } else this.regularTrace(blue('clean') + ' no ' + red('<trigger>') + ' parameter provided, can not continue', r);
     }
     removeOlder(e, r, t) {
         expect(e, 'Pfile'), expect(r, 'Pfile');
         var i = this.compareTimestamps(e, r, 'older');
-        -400 == i ? this.regularTrace(blue('clean') + ' ignoring because trigger ' + green(this.shortDisplayFilename(e.name)) + ' does not exist', t) : 220 == i && (this.verboseTrace(blue('clean') + ' removing ' + green(this.shortDisplayFilename(r.name)), t), 
+        -400 == i ? this.regularTrace(blue('clean') + ' ignoring because trigger ' + green(this.shortDisplayFilename(e.name)) + ' does not exist', t) : 220 == i && (this.regularTrace(blue('clean ') + green(this.shortDisplayFilename(e.name)) + ' triggered removal of ' + green(this.shortDisplayFilename(r.name)), t), 
         r.isFile() && r.unlinkFile());
     }
     processRunCommand(e) {
