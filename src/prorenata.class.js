@@ -47,7 +47,7 @@ export default class Prorenata {
 		this.commands.set('copy',    'builtin');
 		this.commands.set('recurse', 'builtin');
 		this.commands.set('compare', 'builtin');
-		this.commands.set('clean', 'builtin');
+		this.commands.set('clean',   'builtin');
 		this.commands.set('run',     'builtin');
 	}
 
@@ -293,7 +293,7 @@ export default class Prorenata {
 			return;
 		}
 		if (!trigger.isFile()) {
-			this.verboseTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
+			this.regularTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
 			return;
 		}
 		
@@ -339,7 +339,7 @@ export default class Prorenata {
 			this.regularTrace(blue('clean') + ' ignoring because trigger ' + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
 		}
 		else if (ow == 220) {
-			this.verboseTrace(blue('clean') + ' removing ' + green(this.shortDisplayFilename(dependent.name)), paramMap);
+			this.regularTrace(blue('clean ') + green(this.shortDisplayFilename(trigger.name)) + ' triggered removal of ' + green(this.shortDisplayFilename(dependent.name)), paramMap);
 			if (dependent.isFile())
 				dependent.unlinkFile();
 		}
