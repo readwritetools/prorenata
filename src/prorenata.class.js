@@ -47,6 +47,7 @@ export default class Prorenata {
 		this.commands.set('copy',    'builtin');
 		this.commands.set('recurse', 'builtin');
 		this.commands.set('compare', 'builtin');
+		this.commands.set('clean', 'builtin');
 		this.commands.set('run',     'builtin');
 	}
 
@@ -62,6 +63,10 @@ export default class Prorenata {
 		this.instructionPfile.makeAbsolute();
 		if (!this.instructionPfile.exists()) {
 			terminal.writeToConsoleOrStderr(green(this.instructionPfile.name) + ' not found');
+			return;
+		}
+		if (this.instructionPfile.isDirectory()) {
+			terminal.writeToConsoleOrStderr(green(this.instructionPfile.name) + ' is a directory, expected an instruction file');
 			return;
 		}
 		
@@ -153,6 +158,10 @@ export default class Prorenata {
 				
 			case 'compare':
 				this.processCompareCommand(entity);
+				break;
+				
+			case 'clean':
+				this.processCleanCommand(entity);
 				break;
 				
 			case 'run':
@@ -259,6 +268,83 @@ export default class Prorenata {
 			this.halt = true;
 	}
 
+	//^ The 'clean' command
+	processCleanCommand(cleanEntity) {
+		expect(cleanEntity, 'GroupEntity');
+		
+		var paramMap = this.buildParameterMap('clean', cleanEntity);
+		this.verifyBuiltinParams('clean', paramMap);
+
+		expect(this.instructionPfile, 'Pfile');
+		var path = this.instructionPfile.getPath();
+
+		// get trigger, make absolute, ensure that it is not a directory, ensure that it exists
+		if (paramMap.has('trigger')) {
+			var trigger = new Pfile(paramMap.get('trigger'));
+			if (!trigger.isAbsolutePath())
+				trigger = new Pfile(path).addPath(paramMap.get('trigger'));
+		}
+		else {
+			this.regularTrace(blue('clean') + ' no ' + red('<trigger>') + ' parameter provided, can not continue', paramMap);
+			return;
+		}
+		if (trigger.isDirectory()) {
+			this.regularTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(trigger.name)) + ' is a directory, expected a filename', paramMap);
+			return;
+		}
+		if (!trigger.isFile()) {
+			this.verboseTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
+			return;
+		}
+		
+		// get dependents, make absolute, loop on files of directory, remove if older
+		var dependentPatterns = new Array();
+		if (paramMap.has('dependent')) {
+			dependentPatterns = paramMap.get('dependent').split(this.privateJoinChar);
+			expect(dependentPatterns, 'Array');
+		}
+		
+		for (let i=0; i < dependentPatterns.length; i++) {
+			if (dependentPatterns[i] == '') {
+				this.regularTrace(blue('clean') + red(' <dependent> ') + 'is not specified', paramMap);
+				return;
+			}
+			
+			var dependent = new Pfile(dependentPatterns[i]);
+			if (!dependent.isAbsolutePath())
+				dependent = new Pfile(path).addPath(dependentPatterns[i]);
+			
+			if (dependent.isDirectory()) {
+				var bunch = new Bunch(dependent.name, '*', Bunch.FILE);
+				var files = bunch.find(false);
+				
+				for (let j=0; j < files.length; j++) {
+					var oneDependent = new Pfile(dependent).addPath(files[j]);
+					this.removeOlder(trigger, oneDependent, paramMap);
+				}
+			}
+			else if (dependent.isFile()) {
+				this.removeOlder(trigger, dependent, paramMap);
+			}
+		}
+	}
+
+	//^ Remove a dependent file if the trigger is newer
+	removeOlder(trigger, dependent, paramMap) {
+		expect(trigger, 'Pfile');
+		expect(dependent, 'Pfile');
+		
+		var ow = this.compareTimestamps(trigger, dependent, 'older');
+		if (ow == -400) {
+			this.regularTrace(blue('clean') + ' ignoring because trigger ' + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
+		}
+		else if (ow == 220) {
+			this.verboseTrace(blue('clean') + ' removing ' + green(this.shortDisplayFilename(dependent.name)), paramMap);
+			if (dependent.isFile())
+				dependent.unlinkFile();
+		}
+	}
+	
 	//^ The 'run' command
 	//  The only recognized child is 'sh' 
 	processRunCommand(runEntity) {
@@ -469,7 +555,7 @@ export default class Prorenata {
 					return; // nothing else to do here
 				}
 
-				var ow = this.allowOverwrite(source, dest, overwriteRule);
+				var ow = this.compareTimestamps(source, dest, overwriteRule);
 				if (ow < 0) {
 					if (ow == -230)
 						this.verboseTrace(blue(cmdName) + ' not overwriting because ' + green(this.shortDisplayFilename(source.name)) + blue(' same as ') + green(this.shortDisplayFilename(dest.name)), paramMap);
@@ -477,8 +563,10 @@ export default class Prorenata {
 						this.verboseTrace(blue(cmdName) + ' not overwriting because ' + green(this.shortDisplayFilename(source.name)) + blue(' older than ') + green(this.shortDisplayFilename(dest.name)), paramMap);
 					else if (ow == -300)
 						this.verboseTrace(blue(cmdName) + ' not overwriting because ' + green(this.shortDisplayFilename(dest.name)) + blue(' already exists'), paramMap);
+					else if (ow == -400)
+						this.verboseTrace(blue(cmdName) + ' ignoring because ' + green(this.shortDisplayFilename(source.name)) + blue(' does not exist'), paramMap);
 					else
-						terminal.logic(`allowOverwrite = ${ow}`);
+						terminal.logic(`compareTimestamps = ${ow}`);
 					return;
 				}
 			}
@@ -491,34 +579,6 @@ export default class Prorenata {
 		}
 		else
 			terminal.warning(blue(cmdName), ' ', source.name, red(' NOT FOUND'));
-	}
-	
-	//> only write this message to terminal if the 'progress' parameter is 'regular' or 'verbose'
-	regularTrace(traceMsg, paramMap) {
-		expect(traceMsg, 'String');
-		expect(paramMap, 'Map');
-		
-		if (paramMap.has('progress'))
-			var progress = paramMap.get('progress');
-		else
-			var progress = 'regular';
-		
-		if (progress == 'regular' || progress == 'verbose')
-			terminal.trace(traceMsg);
-	}
-	
-	//> only write this message to terminal if the 'progress' parameter is 'verbose'
-	verboseTrace(traceMsg, paramMap) {
-		expect(traceMsg, 'String');
-		expect(paramMap, 'Map');
-		
-		if (paramMap.has('progress'))
-			var progress = paramMap.get('progress');
-		else
-			var progress = 'regular';
-		
-		if (progress == 'verbose')
-			terminal.trace(traceMsg);
 	}
 	
 	//-------------------------------------------------------------------------
@@ -711,11 +771,16 @@ export default class Prorenata {
 	//< returns -240 if overwrite 'older' but source has an older timestamp than dest
 	//< returns  300 if overwrite 'never' but dest does not exist
 	//< returns -300 if overwrite 'never' and dest exists
-	allowOverwrite(source, dest, overwriteRule) {
+	//< returns -400 if source does not exist
+	//< returns -500 on bad logic
+	compareTimestamps(source, dest, overwriteRule) {
 		expect(source, 'Pfile');
 		expect(dest, 'Pfile');
 		expect(overwriteRule, 'String');
 		
+		if (!source.exists())
+			return -400;
+
 		if (overwriteRule == 'always')
 			return 100;
 		
@@ -732,7 +797,7 @@ export default class Prorenata {
 				else if (sourceTime < destTime)
 					return -240;
 				else {
-					terminal.logic('allowOverwrite');
+					terminal.logic('compareTimestamps');
 					return -250;
 				}
 			}
@@ -744,7 +809,7 @@ export default class Prorenata {
 
 		else {
 			terminal.logic('Unhandled overwriteRule ', red(overwriteRule));
-			return -400;
+			return -500;
 		}
 	}
 	
@@ -813,6 +878,11 @@ export default class Prorenata {
 					var concatValue = paramMap.has('exclude') ? paramMap.get('exclude')  + this.privateJoinChar + paramValue : paramValue;
 					paramMap.set(paramName, concatValue);
 				}
+				// handle 'dependent', which may legitimately be specified more than once
+				else if (paramName == 'dependent') {
+					var concatValue = paramMap.has('dependent') ? paramMap.get('dependent')  + this.privateJoinChar + paramValue : paramValue;
+					paramMap.set(paramName, concatValue);
+				}
 				// verify the value provided with 'overwrite'
 				else if (paramName == 'overwrite') {
 					if (paramValue != 'older' && paramValue != 'always' && paramValue != 'never') {
@@ -831,7 +901,7 @@ export default class Prorenata {
 	}
 
 	// Verify that every parameter specified by the user is needed
-	//> cmd is the name of the cammand
+	//> cmd is the name of the command
 	//> paramMap is a Map of the parameters specified by the user, in entities subordinate to the command
 	verifyUserParams(cmd, paramMap) {
 		expect(cmd, 'String');
@@ -878,6 +948,10 @@ export default class Prorenata {
 		else if (cmd == 'compare') {
 			var requiredParams = ['source', 'dest'];
 			var optionalParams = ['include', 'exclude', 'extension', 'onerror'];
+		}
+		else if (cmd == 'clean') {
+			var requiredParams = ['trigger', 'dependent'];
+			var optionalParams = ['progress', 'onerror'];
 		}
 		else if (cmd == 'run') {
 			var requiredParams = ['sh'];
@@ -940,4 +1014,38 @@ export default class Prorenata {
 		else
 			return str;
 	}
+	
+	//-------------------------------------------------------------------------
+	// trace
+	//-------------------------------------------------------------------------
+	
+	//> only write this message to terminal if the 'progress' parameter is 'regular' or 'verbose'
+	regularTrace(traceMsg, paramMap) {
+		expect(traceMsg, 'String');
+		expect(paramMap, 'Map');
+		
+		if (paramMap.has('progress'))
+			var progress = paramMap.get('progress');
+		else
+			var progress = 'regular';
+		
+		if (progress == 'regular' || progress == 'verbose')
+			terminal.trace(traceMsg);
+	}
+	
+	//> only write this message to terminal if the 'progress' parameter is 'verbose'
+	verboseTrace(traceMsg, paramMap) {
+		expect(traceMsg, 'String');
+		expect(paramMap, 'Map');
+		
+		if (paramMap.has('progress'))
+			var progress = paramMap.get('progress');
+		else
+			var progress = 'regular';
+		
+		if (progress == 'verbose')
+			terminal.trace(traceMsg);
+	}
+	
+
 }

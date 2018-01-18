@@ -102,6 +102,7 @@ module.exports = class CLI {
 		s.push("commands := template | recurse | compare| copy | run");
 		s.push("   'template'  defines new commands for use with the <exec> parameter of 'recurse'");
 		s.push("   'recurse'   runs a template-defined command recursively over all files in <source>");
+		s.push("   'clean'     remove <dependent> files that are older than <trigger>");
 		s.push("   'compare'   lists files that are in <source> but not in <dest>");
 		s.push("   'copy'      recursively copies all files in <source> to <dest>");
 		s.push("   'run'       executes an arbitrary shell command");
@@ -110,27 +111,31 @@ module.exports = class CLI {
     
     listParameters() {
 		var s = [];
-		s.push("'recurse'  parameters := source* | exec* | include | exclude | extension | overwrite | mkdir | progress | dest | onerror");
-		s.push("'compare'  parameters := source* | dest* | include | exclude | extension | onerror");
-		s.push("'copy'     parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | progress | onerror");
-		s.push("'run'      parameters := sh* | progress | onerror");
-		s.push("'template' has definitions (not parameters) for use with the <exec> parameter of a 'recurse' command");
+		s.push("'recurse'    parameters := source* | exec* | include | exclude | extension | overwrite | mkdir | progress | dest | onerror");
+		s.push("'compare'    parameters := source* | dest* | include | exclude | extension | onerror");
+		s.push("'copy'       parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | progress | onerror");
+		s.push("'clean'      parameters := trigger* | dependent* | progress | onerror");
+		s.push("'run'        parameters := sh* | progress | onerror");
+		s.push("'template'   has definitions that can be used with the <exec> parameter of a 'recurse' command");
 		s.push("");
 		s.push("parameters :=");
-		s.push("   <source>    an absolute or relative path");
-		s.push("   <dest>      an absolute or relative path");
-		s.push("   <include>   a file pattern to include, if omitted defaults to '*'");
-		s.push("   <exclude>   a file pattern to exclude");
-		s.push("   <extension> the filename extension to apply to destination filenames");
-		s.push("   <exec>      a command name defined in the 'template' section");
-		s.push("   <overwrite> := always | older | never†");
-		s.push("   <mkdir>     := true | false†");
-		s.push("   <progress>  := verbose | regular† | none");
-		s.push("   <onerror>   := continue | halt†");
-		s.push("   <sh>        a shell command to execute");
+		s.push("   <source>      an absolute or relative path");
+		s.push("   <dest>        an absolute or relative path");
+		s.push("   <include>+    a file pattern to include, if omitted defaults to '*'");
+		s.push("   <exclude>+    a file pattern to exclude");
+		s.push("   <extension>   the filename extension to apply to destination filenames");
+		s.push("   <exec>        a command name defined in the 'template' section");
+		s.push("   <overwrite>   := always | older | never†");
+		s.push("   <mkdir>       := true | false†");
+		s.push("   <trigger>     an absolute or relative filename");
+		s.push("   <dependent>+  an absolute or relative path");
+		s.push("   <sh>          a shell command to execute");
+		s.push("   <progress>    := verbose | regular† | none");
+		s.push("   <onerror>     := continue | halt†");
 		s.push("");
-		s.push("* required parameter");
-		s.push("† optional parameter default value");
+		s.push("*  required parameter");
+		s.push("+  parameter that may be provided multiple times");
+		s.push("†  optional parameter default value");
 		return s.join("\n")
     }
 

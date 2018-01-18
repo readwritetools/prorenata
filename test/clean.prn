@@ -1,0 +1,50 @@
+!blue 2.0
+
+// ----------- clean (single file) --------------
+clean {
+	trigger    '../test/appA/proto/blue/includes/snippet.blue'
+	dependent  '../test/appA/fused/blue/page-a-variation.blue'
+	dependent  '../test/appA/fused/blue/page1.blue'
+	dependent  '../test/appA/fused/blue/page2.blue'
+	progress   verbose
+}
+
+// ----------- clean (all files in dependent path) --------------
+clean {
+	trigger    '../test/appA/proto/blue/enclosures/standard-wrapper.blue'
+	dependent  '../test/appA/fused/blue'
+	progress   verbose
+}
+
+// ----------- trigger must exist --------------
+clean {
+	trigger    '../test/appA/proto/blue/enclosures/does-not-exist.blue'
+	dependent  '../test/appA/fused/blue'
+	progress   verbose
+}
+
+// ----------- trigger must not be directory --------------
+clean {
+	trigger    '../test/appA/proto/blue/enclosures'
+	dependent  '../test/appA/fused/blue'
+	progress   verbose
+}
+
+// ----------- blank dependent --------------
+clean {
+	trigger    '../test/appA/proto/blue/enclosures/standard-wrapper.blue'
+	dependent
+	progress   verbose
+}
+
+// ----------- missing required parameters --------------
+clean {
+}
+
+// ----------- extra parameter --------------
+clean {
+	trigger    '../test/appA/proto/blue/enclosures/standard-wrapper.blue'
+	dependent  '../test/appA/fused/blue'
+	source     '../test/appA'
+}
+
