@@ -1,50 +1,78 @@
 !blue 2.0
 
-// ----------- clean (single file) --------------
+
+// ----------- 1 setup --------------
+copy {
+	source   '../test/appA/fused2/blue'
+	dest     '../test/appA/fused/blue'
+	preserve true
+}
+
+// ----------- 2 clean (multiple single files) --------------
 clean {
 	trigger    '../test/appA/proto/blue/includes/snippet.blue'
 	dependent  '../test/appA/fused/blue/page-a-variation.blue'
 	dependent  '../test/appA/fused/blue/page1.blue'
 	dependent  '../test/appA/fused/blue/page2.blue'
-	progress   verbose
 }
 
-// ----------- clean (all files in dependent path) --------------
+
+// ----------- 3 setup --------------
+copy {
+	source   '../test/appA/fused2/blue'
+	dest     '../test/appA/fused/blue'
+	preserve true
+}
+
+// ----------- 4 clean (all files in dependent path) --------------
 clean {
 	trigger    '../test/appA/proto/blue/enclosures/standard-wrapper.blue'
 	dependent  '../test/appA/fused/blue'
-	progress   verbose
 }
 
-// ----------- trigger must exist --------------
+
+// ----------- 5 setup --------------
+copy {
+	source   '../test/appA/fused2/blue'
+	dest     '../test/appA/fused/blue'
+	preserve true
+}
+
+// ----------- 6 clean based on multiple triggers --------------
+clean {
+	trigger    '../test/appA/proto/blue/includes/snippet.blue'
+	trigger    '../test/appA/proto/blue/enclosures/standard-wrapper.blue'
+	dependent  '../test/appA/fused/blue/page3.blue'
+	dependent  '../test/appA/fused/blue/page4.blue'
+}
+
+
+// ----------- 7 trigger must exist --------------
 clean {
 	trigger    '../test/appA/proto/blue/enclosures/does-not-exist.blue'
 	dependent  '../test/appA/fused/blue'
-	progress   verbose
 }
 
-// ----------- trigger must not be directory --------------
+// ----------- 8 trigger must not be directory --------------
 clean {
 	trigger    '../test/appA/proto/blue/enclosures'
 	dependent  '../test/appA/fused/blue'
-	progress   verbose
 }
 
-// ----------- blank dependent --------------
+// ----------- 9 blank dependent --------------
 clean {
 	trigger    '../test/appA/proto/blue/enclosures/standard-wrapper.blue'
 	dependent
-	progress   verbose
 }
 
-// ----------- missing required parameters --------------
+// ----------- 10 missing required parameters --------------
 clean {
 }
 
-// ----------- extra parameter --------------
+// ----------- 11 extra parameter --------------
 clean {
 	trigger    '../test/appA/proto/blue/enclosures/standard-wrapper.blue'
-	dependent  '../test/appA/fused/blue'
-	source     '../test/appA'
+	dependent  '../test/appA/fused/blue/page1.blue'
+	source     'extra'
 }
 

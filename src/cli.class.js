@@ -113,7 +113,7 @@ export default class CLI {
 		var s = [];
 		s.push("'recurse'    parameters := source* | exec* | include | exclude | extension | overwrite | mkdir | progress | dest | onerror");
 		s.push("'compare'    parameters := source* | dest* | include | exclude | extension | onerror");
-		s.push("'copy'       parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | progress | onerror");
+		s.push("'copy'       parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | preserve | progress | onerror");
 		s.push("'clean'      parameters := trigger* | dependent* | progress | onerror");
 		s.push("'run'        parameters := sh* | progress | onerror");
 		s.push("'template'   has definitions that can be used with the <exec> parameter of a 'recurse' command");
@@ -126,7 +126,8 @@ export default class CLI {
 		s.push("   <extension>   the filename extension to apply to destination filenames");
 		s.push("   <exec>        a command name defined in the 'template' section");
 		s.push("   <overwrite>   := always | older | never†");
-		s.push("   <mkdir>       := true | false†");
+		s.push("   <mkdir>       := true | false† (create missing directories)");
+		s.push("   <preserve>    := true | false† (preserve timestamps)");
 		s.push("   <trigger>     an absolute or relative filename");
 		s.push("   <dependent>+  an absolute or relative path");
 		s.push("   <sh>          a shell command to execute");

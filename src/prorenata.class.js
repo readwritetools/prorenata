@@ -225,10 +225,19 @@ export default class Prorenata {
 		var paramMap = this.buildParameterMap('copy', copyEntity);
 		this.verifyBuiltinParams('copy', paramMap);
 
+		var preserve = 'false';	// true | false†
+		if (paramMap.has('preserve')) {
+			preserve = paramMap.get('preserve');
+			if (preserve != 'true' && preserve != 'false')
+				preserve = 'false';
+		}
+
+		var preserveAttr = (preserve == 'true') ? '--preserve' : '--preserve=mode,ownership';	// --preserve=mode,ownership,timestamps
+
 		// 'cp --preserve <source> <dest>'
 		var processArgs = [
 			'cp',
-			'--preserve=mode,ownership',	// --preserve=mode,ownership,timestamps
+			preserveAttr,
 			'<source>',
 			'<dest>'
 			];
@@ -278,70 +287,33 @@ export default class Prorenata {
 		expect(this.instructionPfile, 'Pfile');
 		var path = this.instructionPfile.getPath();
 
-		// get trigger, make absolute, ensure that it is not a directory, ensure that it exists
+		var triggerPatterns = new Array();
 		if (paramMap.has('trigger')) {
-			var trigger = new Pfile(paramMap.get('trigger'));
-			if (!trigger.isAbsolutePath())
-				trigger = new Pfile(path).addPath(paramMap.get('trigger'));
+			triggerPatterns = paramMap.get('trigger').split(this.privateJoinChar);
+			expect(triggerPatterns, 'Array');
 		}
 		else {
 			this.regularTrace(blue('clean') + ' no ' + red('<trigger>') + ' parameter provided, can not continue', paramMap);
 			return;
 		}
-		if (trigger.isDirectory()) {
-			this.regularTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(trigger.name)) + ' is a directory, expected a filename', paramMap);
-			return;
-		}
-		if (!trigger.isFile()) {
-			this.regularTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
-			return;
-		}
 		
-		// get dependents, make absolute, loop on files of directory, remove if older
-		var dependentPatterns = new Array();
-		if (paramMap.has('dependent')) {
-			dependentPatterns = paramMap.get('dependent').split(this.privateJoinChar);
-			expect(dependentPatterns, 'Array');
-		}
-		
-		for (let i=0; i < dependentPatterns.length; i++) {
-			if (dependentPatterns[i] == '') {
-				this.regularTrace(blue('clean') + red(' <dependent> ') + 'is not specified', paramMap);
+		// make absolute, ensure that it is not a directory, ensure that it exists
+		for (let i=0; i < triggerPatterns.length; i++) {
+			var trigger = new Pfile(triggerPatterns[i]);
+			if (!trigger.isAbsolutePath())
+				trigger = new Pfile(path).addPath(triggerPatterns[i]);
+
+			if (trigger.isDirectory()) {
+				this.regularTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(trigger.name)) + ' is a directory, expected a filename', paramMap);
 				return;
 			}
 			
-			var dependent = new Pfile(dependentPatterns[i]);
-			if (!dependent.isAbsolutePath())
-				dependent = new Pfile(path).addPath(dependentPatterns[i]);
+			if (!trigger.isFile()) {
+				this.regularTrace(blue('clean') + red(' <trigger> ') + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
+				return;
+			}
 			
-			if (dependent.isDirectory()) {
-				var bunch = new Bunch(dependent.name, '*', Bunch.FILE);
-				var files = bunch.find(false);
-				
-				for (let j=0; j < files.length; j++) {
-					var oneDependent = new Pfile(dependent).addPath(files[j]);
-					this.removeOlder(trigger, oneDependent, paramMap);
-				}
-			}
-			else if (dependent.isFile()) {
-				this.removeOlder(trigger, dependent, paramMap);
-			}
-		}
-	}
-
-	//^ Remove a dependent file if the trigger is newer
-	removeOlder(trigger, dependent, paramMap) {
-		expect(trigger, 'Pfile');
-		expect(dependent, 'Pfile');
-		
-		var ow = this.compareTimestamps(trigger, dependent, 'older');
-		if (ow == -400) {
-			this.regularTrace(blue('clean') + ' ignoring because trigger ' + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
-		}
-		else if (ow == 220) {
-			this.regularTrace(blue('clean ') + green(this.shortDisplayFilename(trigger.name)) + ' triggered removal of ' + green(this.shortDisplayFilename(dependent.name)), paramMap);
-			if (dependent.isFile())
-				dependent.unlinkFile();
+			this.processOneTrigger(trigger, paramMap);
 		}
 	}
 	
@@ -384,6 +356,67 @@ export default class Prorenata {
 		}
 	}
 	
+	//-------------------------------------------------------------------------
+	// 'clean' functions
+	//-------------------------------------------------------------------------
+
+	//^ 'clean' one trigger
+	processOneTrigger(trigger, paramMap) {
+		expect(trigger, 'Pfile');
+		expect(paramMap, 'Map');
+		
+		// get dependents, make absolute, loop on files of directory, remove if older
+		var dependentPatterns = new Array();
+		if (paramMap.has('dependent')) {
+			dependentPatterns = paramMap.get('dependent').split(this.privateJoinChar);
+			expect(dependentPatterns, 'Array');
+		}
+		
+		for (let j=0; j < dependentPatterns.length; j++) {
+			if (dependentPatterns[j] == '') {
+				this.regularTrace(blue('clean') + red(' <dependent> ') + 'is not specified', paramMap);
+				return;
+			}
+			
+			expect(this.instructionPfile, 'Pfile');
+			var path = this.instructionPfile.getPath();
+
+			var dependent = new Pfile(dependentPatterns[j]);
+			if (!dependent.isAbsolutePath())
+				dependent = new Pfile(path).addPath(dependentPatterns[j]);
+			
+			if (dependent.isDirectory()) {
+				var bunch = new Bunch(dependent.name, '*', Bunch.FILE);
+				var files = bunch.find(false);
+				
+				for (let k=0; k < files.length; k++) {
+					var oneDependent = new Pfile(dependent).addPath(files[k]);
+					this.removeOlder(trigger, oneDependent, paramMap);
+				}
+			}
+			else if (dependent.isFile()) {
+				this.removeOlder(trigger, dependent, paramMap);
+			}
+		}
+	}
+	
+	//^ Remove a dependent file if the trigger is newer
+	removeOlder(trigger, dependent, paramMap) {
+		expect(trigger, 'Pfile');
+		expect(dependent, 'Pfile');
+		expect(paramMap, 'Map');
+		
+		var ow = this.compareTimestamps(trigger, dependent, 'older');
+		if (ow == -400) {
+			this.regularTrace(blue('clean') + ' ignoring because trigger ' + green(this.shortDisplayFilename(trigger.name)) + ' does not exist', paramMap);
+		}
+		else if (ow == 220) {
+			this.regularTrace(blue('clean ') + green(this.shortDisplayFilename(trigger.name)) + ' triggered removal of ' + green(this.shortDisplayFilename(dependent.name)), paramMap);
+			if (dependent.isFile())
+				dependent.unlinkFile();
+		}
+	}	
+
 	//-------------------------------------------------------------------------
 	// recursion
 	//-------------------------------------------------------------------------
@@ -878,6 +911,11 @@ export default class Prorenata {
 					var concatValue = paramMap.has('exclude') ? paramMap.get('exclude')  + this.privateJoinChar + paramValue : paramValue;
 					paramMap.set(paramName, concatValue);
 				}
+				// handle 'trigger', which may legitimately be specified more than once
+				else if (paramName == 'trigger') {
+					var concatValue = paramMap.has('trigger') ? paramMap.get('trigger')  + this.privateJoinChar + paramValue : paramValue;
+					paramMap.set(paramName, concatValue);
+				}
 				// handle 'dependent', which may legitimately be specified more than once
 				else if (paramName == 'dependent') {
 					var concatValue = paramMap.has('dependent') ? paramMap.get('dependent')  + this.privateJoinChar + paramValue : paramValue;
@@ -939,7 +977,7 @@ export default class Prorenata {
 		
 		if (cmd == 'copy') {
 			var requiredParams = ['source', 'dest'];
-			var optionalParams = ['include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress', 'onerror'];
+			var optionalParams = ['include', 'exclude', 'overwrite', 'mkdir', 'preserve', 'extension', 'progress', 'onerror'];
 		}
 		else if (cmd == 'recurse') {
 			var requiredParams = ['source', 'exec'];
