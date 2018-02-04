@@ -13,6 +13,6 @@
 // ---------- install app to user's path ---------- 
 run {
 	sh npm -g bin   // show target destination
-	sh npm install -g git+ssh://root@nk021:/keep/prorenata
+	sh npm install -g git+ssh://root@nk024:/keep/prorenata
 	sh renata --version
 }
