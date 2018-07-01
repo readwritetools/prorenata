@@ -24,8 +24,8 @@
     "bump-version": "npm version patch && git push && git push --tags"
   },
   "dependencies": {
-    "bluephrase": "git+ssh://root@nk024:/keep/bluephrase#*",
-    "joezone": "git+ssh://root@nk024:/keep/joezone#*"
+    "bluephrase": "git+ssh://root@nk024:/keep/bluephrase#",
+    "joezone": "git+ssh://root@nk024:/keep/joezone#"
   },
   "files": [
     "bin",

@@ -1,0 +1,19 @@
+!blue 2.0
+/*=============================================================================
+//
+// File:         prorenata/pro/build
+// Language:     prorenata script
+// Copyright:    Joe Honton © 2018
+// License:      CC-BY-NC-ND 4.0
+// Initial date: Jun 30, 2018
+// Contents:     life cycle
+//
+=============================================================================*/
+
+run {
+//	sh renata prepare			// install node module dependencies
+	sh renata exim				// convert any modified .js         from src --> dbg
+	sh renata test				// use previously-deployed prorenata to execute just-compiled dbg version
+//	sh renata deploy			// minify, bump version, push repo
+//	sh renata installg			// install as global utility
+}
