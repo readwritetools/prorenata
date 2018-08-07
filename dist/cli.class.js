@@ -38,8 +38,8 @@ module.exports = class CLI {
     }
     showVersion() {
         try {
-            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8'), r = JSON.parse(s);
-            return `version v${r.version}`;
+            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8');
+            return `version v${JSON.parse(s).version}`;
         } catch (e) {
             return `version unknown ${e.message}`;
         }
@@ -100,6 +100,6 @@ module.exports = class CLI {
     }
     execute() {
         var e = new Prorenata();
-        e.execute();
+        e.execute(), 1 == e.halt ? process.exit(1) : process.exit(0);
     }
 };
