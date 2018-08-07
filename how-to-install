@@ -1,5 +1,5 @@
 // install prorenata using npm with global switch
-[root]# npm install -g git+ssh://root@nk021:/keep/prorenata
+[root]# npm install -g git+ssh://root@nk024:/keep/prorenata
 
 // verify installation
 [root]# npm -g bin

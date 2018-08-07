@@ -198,6 +198,10 @@ export default class CLI {
     execute() {
 	    var prorenata = new Prorenata();
 	    prorenata.execute();
+	    if (prorenata.halt == true)
+			process.exit(1);
+	    else
+			process.exit(0);
     }
 
 }
