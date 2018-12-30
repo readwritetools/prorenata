@@ -38,8 +38,8 @@ module.exports = class CLI {
     }
     showVersion() {
         try {
-            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8');
-            return `version v${JSON.parse(s).version}`;
+            var e = new Pfile(__dirname).addPath('../package.json').name, s = fs.readFileSync(e, 'utf-8'), t = JSON.parse(s);
+            return `version v${t.version}`;
         } catch (e) {
             return `version unknown ${e.message}`;
         }
@@ -63,17 +63,17 @@ module.exports = class CLI {
         e.push('\'compare\'    parameters := source* | dest* | include | exclude | extension | onerror'), 
         e.push('\'copy\'       parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | preserve | progress | onerror'), 
         e.push('\'clean\'      parameters := trigger* | dependent* | progress | onerror'), 
-        e.push('\'run\'        parameters := sh* | progress | onerror'), e.push('\'template\'   has definitions that can be used with the <exec> parameter of a \'recurse\' command'), 
+        e.push('\'run\'        parameters := sh | if | progress | onerror'), e.push('\'template\'   has definitions that can be used with the <exec> parameter of a \'recurse\' command'), 
         e.push(''), e.push('parameters :='), e.push('   <source>      an absolute or relative path'), 
         e.push('   <dest>        an absolute or relative path'), e.push('   <include>+    a file pattern to include, if omitted defaults to \'*\''), 
         e.push('   <exclude>+    a file pattern to exclude'), e.push('   <extension>   the filename extension to apply to destination filenames'), 
         e.push('   <exec>        a command name defined in the \'template\' section'), e.push('   <overwrite>   := always | older | never†'), 
         e.push('   <mkdir>       := true | false† (create missing directories)'), e.push('   <preserve>    := true | false† (preserve timestamps)'), 
         e.push('   <trigger>     an absolute or relative filename'), e.push('   <dependent>+  an absolute or relative path'), 
-        e.push('   <sh>          a shell command to execute'), e.push('   <progress>    := verbose | regular† | none'), 
-        e.push('   <onerror>     := continue | halt†'), e.push(''), e.push('*  required parameter'), 
-        e.push('+  parameter that may be provided multiple times'), e.push('†  optional parameter default value'), 
-        e.join('\n');
+        e.push('   <sh>+         a shell command to execute'), e.push('   <if>+         a conditional if [hostname == | hostname !=] then ... else ...'), 
+        e.push('   <progress>    := verbose | regular† | none'), e.push('   <onerror>     := continue | halt†'), 
+        e.push(''), e.push('*  required parameter'), e.push('+  parameter that may be provided multiple times'), 
+        e.push('†  optional parameter default value'), e.join('\n');
     }
     listExamples() {
         var e = [];
