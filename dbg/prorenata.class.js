@@ -234,7 +234,10 @@ module.exports = class Prorenata {
 				preserve = 'false';
 		}
 
-		var preserveAttr = (preserve == 'true') ? '--preserve' : '--preserve=mode,ownership';	// --preserve=mode,ownership,timestamps
+		if (process.platform == 'darwin')
+			var preserveAttr = (preserve == 'true') ? '-p' : '';	// -p preserves mode,ownership,timestamps
+		else
+			var preserveAttr = (preserve == 'true') ? '--preserve' : '--preserve=mode,ownership';	// --preserve=mode,ownership,timestamps
 
 		// 'cp --preserve <source> <dest>'
 		var processArgs = [
