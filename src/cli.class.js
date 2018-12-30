@@ -115,7 +115,7 @@ export default class CLI {
 		s.push("'compare'    parameters := source* | dest* | include | exclude | extension | onerror");
 		s.push("'copy'       parameters := source* | dest* | include | exclude | extension | overwrite | mkdir | preserve | progress | onerror");
 		s.push("'clean'      parameters := trigger* | dependent* | progress | onerror");
-		s.push("'run'        parameters := sh* | progress | onerror");
+		s.push("'run'        parameters := sh | if | progress | onerror");
 		s.push("'template'   has definitions that can be used with the <exec> parameter of a 'recurse' command");
 		s.push("");
 		s.push("parameters :=");
@@ -130,7 +130,8 @@ export default class CLI {
 		s.push("   <preserve>    := true | false† (preserve timestamps)");
 		s.push("   <trigger>     an absolute or relative filename");
 		s.push("   <dependent>+  an absolute or relative path");
-		s.push("   <sh>          a shell command to execute");
+		s.push("   <sh>+         a shell command to execute");
+		s.push("   <if>+         a conditional if [hostname == | hostname !=] then ... else ...");
 		s.push("   <progress>    := verbose | regular† | none");
 		s.push("   <onerror>     := continue | halt†");
 		s.push("");

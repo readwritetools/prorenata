@@ -18,6 +18,7 @@ import {RootEntity}		from 'bluephrase';
 import {EntityPath}		from 'bluephrase';
 import {TT}				from 'bluephrase';
 import fs				from 'fs';
+import os				from 'os';
 import ChildProcess 	from 'child_process';
 
 terminal.setProcessName('[prn]');
@@ -80,6 +81,7 @@ export default class Prorenata {
 		try {
 			var fileInterface = new FileInterface();
 			fileInterface.setOption('vocabulary', 'unchecked'); 
+			fileInterface.setOption('shorthand', 'none'); 
 			this.root = fileInterface.readFile(this.instructionPfile.name);
 		}
 		catch (err) {
@@ -318,7 +320,7 @@ export default class Prorenata {
 	}
 	
 	//^ The 'run' command
-	//  The only recognized child is 'sh' 
+	//  The only recognized child are 'sh' and 'if'
 	processRunCommand(runEntity) {
 		expect(runEntity, 'GroupEntity');
 
@@ -338,15 +340,54 @@ export default class Prorenata {
 				if (shKeyword == 'progress' || shKeyword == 'onerror') {
 					return;
 				}
-				else if (shKeyword != 'sh') {
-					terminal.invalid(blue('run'), ' items within this command should be preceeded by ', green('sh'), ' ignoring ', red(shKeyword), ' ',  red(shCommand) );
-					return;
-				}
-				else {
+				// execute shell command
+				else if (shKeyword == 'sh') {
 					var commandArgs = shCommand.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
 
 					var traceMsg = this.formatProgressMsg('run', null, null, commandArgs, 'argsForm');
 					this.executeChildProcess('run', commandArgs, traceMsg, paramMap);
+				}
+				// conditionally execute if ... then ... else
+				else if (shKeyword == 'if') {
+					// parse shCommand into three commands
+					var thenIndex = shCommand.indexOf('then');
+					if (thenIndex == -1) {
+						terminal.invalid('"if" conditional must have a "then" clause ', red(shCommand));
+						return;
+					}
+					var ifCommand = shCommand.substr(0, thenIndex);
+					var remainingCommand = shCommand.substr(thenIndex+5);
+					var elseIndex = remainingCommand.indexOf('else');
+					if (elseIndex != -1) {
+						var thenCommand = remainingCommand.substr(0, elseIndex);
+						var elseCommand = remainingCommand.substr(elseIndex+5);
+					}					
+					else {
+						var thenCommand = remainingCommand;
+						var elseCommand = null;
+					}
+
+					var commandArgs = ifCommand.split(' ');
+					var traceMsg = this.formatProgressMsg('if', null, null, commandArgs, 'argsForm');
+					
+					// test the 'if hostname ==' or 'if hostname !=' condition
+					var ifStatus = this.testIfCondition(ifCommand);
+					if (ifStatus == true) {
+						var commandArgs = thenCommand.split(' ');
+						var traceMsg = this.formatProgressMsg('then', null, null, commandArgs, 'argsForm');
+						this.executeChildProcess('then', commandArgs, traceMsg, paramMap);
+					}
+					else {
+						if (elseCommand != null) {
+							var commandArgs = elseCommand.split(' ');
+							var traceMsg = this.formatProgressMsg('else', null, null, commandArgs, 'argsForm');
+							this.executeChildProcess('else', commandArgs, traceMsg, paramMap);
+						}
+					}
+				}
+				else { // if (shKeyword != 'sh' && shKeyword != 'if')
+					terminal.invalid(blue('run'), ' items within this command should be preceeded by ', green('sh'), ' or ', green('if'), ' ignoring ', red(shKeyword), ' ',  red(shCommand) );
+					return;
 				}
 			}
 			else if (type == 'PragmaEntity' || type == 'GraynoteEntity')
@@ -614,13 +655,41 @@ export default class Prorenata {
 			terminal.warning(blue(cmdName), ' ', source.name, red(' NOT FOUND'));
 	}
 	
+
+	//-------------------------------------------------------------------------
+	// if condition
+	//-------------------------------------------------------------------------
+	testIfCondition(ifCommand) {
+		expect(ifCommand, 'String');
+		
+		ifCommand = ifCommand.trim();
+		terminal.trace(blue('if'), ' ', green(ifCommand));
+		var parts = ifCommand.split(' ');
+			
+		var left  = parts[0];
+		var op    = parts[1];
+		var right = parts[2];
+		if (left == 'hostname' && op == '==') {
+			return (os.hostname() == right)
+		}
+		else if (left == 'hostname' && op == '!=') {
+			return (os.hostname() != right)
+		}
+		else {
+			terminal.abnormal(`Only "hostname ==" and "hostname !=" are supported`);
+			return false;
+		}
+	}
+	
+	
 	//-------------------------------------------------------------------------
 	// child process
 	//-------------------------------------------------------------------------
 
-	//> cmdName is for console feedback only
+	//> cmdName is for console feedback: expects 'run', 'then', 'else', or one of the template-defined commands
 	//> finalArgs[0] is the executable filename, finalArgs[1]...[N] are the arguments
-	//> traceMsg is the progress message to send to the terminal 
+	//> traceMsg is the progress message to send to the terminal
+	//< returns undefined 
 	executeChildProcess(cmdName, finalArgs, traceMsg, paramMap) {
 		expect(cmdName, 'String');
 		expect(finalArgs, 'Array');
@@ -629,8 +698,8 @@ export default class Prorenata {
 
 		var exeFile = finalArgs[0];
 		var exePfile = new Pfile(exeFile);
-		
 		var args = finalArgs.slice(1);
+		
 		var options = {
 			cwd: this.instructionPfile.getPath(),
 			stdio: [0,1,2],
@@ -639,7 +708,9 @@ export default class Prorenata {
 		
 		try {
 			this.regularTrace(traceMsg, paramMap);
+			
 			var obj = ChildProcess.spawnSync(exeFile, args, options);
+			
 			if (obj.status != 0) {
 				var onError = 'halt';
 				if (paramMap.has('onerror'))
@@ -668,6 +739,8 @@ export default class Prorenata {
 					.replace('ENOENT', '(No such file or directory)');
 				terminal.abnormal(blue(cmdName), message);
 			}
+			
+			return false;
 		}
 	}
 	
@@ -992,8 +1065,8 @@ export default class Prorenata {
 			var optionalParams = ['progress', 'onerror'];
 		}
 		else if (cmd == 'run') {
-			var requiredParams = ['sh'];
-			var optionalParams = ['progress', 'onerror'];
+			var requiredParams = [];
+			var optionalParams = ['sh', 'if', 'progress', 'onerror'];
 		}
 		else
 			terminal.logic('verifyBuiltinParams');

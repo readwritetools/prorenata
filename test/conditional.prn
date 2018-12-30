@@ -1,0 +1,8 @@
+
+// ---------- conditionally execute commands ---------- 
+run {
+	if hostname == CE018    then c:/Git/bin/rsync.exe /c/palau/lib/prorenata/test/appSuite/proto/blue/*.blue root@nk025:/tmp else echo "skipping" 
+	if hostname == CE020    then rsync ../../pkg-rwview/platforms/*.dmg root@nk025:/srv/rwt-packages/rwview/ else echo "skipping" 
+	if hostname == FEDORA29 then rsync ../../pkg-rwview/platforms/*.rpm root@nk025:/srv/rwt-packages/rwview/ else echo "skipping" 
+	if hostname == UBUNTU18 then rsync ../../pkg-rwview/platforms/*.deb root@nk025:/srv/rwt-packages/rwview/ else echo "skipping" 
+}
