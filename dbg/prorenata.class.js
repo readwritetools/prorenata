@@ -82,7 +82,11 @@ module.exports = class Prorenata {
 			var fileInterface = new FileInterface();
 			fileInterface.setOption('vocabulary', 'unchecked');		// treat the first word of every line as 'semantax' 
 			fileInterface.setOption('shorthand', 'limited'); 		// honor `sourceref` and *attribute syntax
-			fileInterface.setOption('nomarks'); 					// shortcut for --noindexmarks --nocitemarks --nolistmarks --noglossmarks --nonotemarks --xenomarks=none
+			fileInterface.setOption('noindexmarks');
+			fileInterface.setOption('nolistmarks');
+			fileInterface.setOption('nocitemarks');
+			fileInterface.setOption('noglossmarks');
+			fileInterface.setOption('nonotemarks');
 			this.root = fileInterface.readFile(this.instructionPfile.name);
 		}
 		catch (err) {
