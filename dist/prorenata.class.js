@@ -23,7 +23,8 @@ module.exports = class Prorenata {
         expect(this.instructionPfile, 'Pfile');
         try {
             var e = new FileInterface();
-            e.setOption('vocabulary', 'unchecked'), e.setOption('shorthand', 'none'), this.root = e.readFile(this.instructionPfile.name);
+            e.setOption('vocabulary', 'unchecked'), e.setOption('shorthand', 'limited'), e.setOption('nomarks'), 
+            this.root = e.readFile(this.instructionPfile.name);
         } catch (e) {
             log.abnormal(e);
         }
