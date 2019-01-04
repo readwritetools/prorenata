@@ -1,0 +1,51 @@
+!blue 2.0
+/*=============================================================================
+//
+// File:         prorenata/pro/finalize
+// Language:     prorenata script
+// Copyright:    Joe Honton © 2018
+// License:      CC-BY-NC-ND 4.0
+// Initial date: Jan 4, 2019
+// Contents:     Minify js and copy files to dist
+//
+=============================================================================*/
+
+
+template {
+	/* npm install -g uglify-es */
+	minify-js      uglifyjs <source> --output <dest> --compress --mangle --keep-classnames --keep-fnames --beautify quote_style=1 --ecma 8
+	copyright-js   copyright ../../../app/prorenata-common/copyright.js <dest>
+}
+
+// ---------- remove comments and whitespace ---------- 
+recurse {
+	source    '../dbg'
+	dest      '../dist'
+	include   '*.js'
+	overwrite older
+	exec      minify-js
+}
+
+// ---------- add copyright ---------- 
+recurse {
+	source    '../dist'
+	dest      '../dist'
+	include   '*.js'
+	overwrite always
+	exec      copyright-js
+	progress  none
+}
+
+// ---------- look for cruft in final dist compared to original src ---------- 
+compare {
+	source    '../dist'
+	dest      '../src'
+}
+
+// ---------- commit any outstanding changes ---------- 
+run {
+	sh git add --verbose ../
+	sh git commit -m finalize
+	sh git push
+	onerror continue
+}
