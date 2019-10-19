@@ -90,7 +90,7 @@ module.exports = class Prorenata {
 			this.root = fileInterface.readFile(this.instructionPfile.name);
 		}
 		catch (err) {
-			log.abnormal(err);
+			terminal.abnormal(err);
 		}
 	}	
 	
@@ -194,8 +194,6 @@ module.exports = class Prorenata {
 		var processArgs = cmdTemplate.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
 		var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
 		
-		var source = paramMap.get('source');
-		var dest = paramMap.get('dest');
 		var traceMsg = this.formatProgressMsg(cmdName, null, null, finalArgs, 'argsForm');
 		this.executeChildProcess(cmdName, finalArgs, traceMsg, paramMap);
 	}
@@ -652,9 +650,21 @@ module.exports = class Prorenata {
 					return;
 				}
 			}
-			
+
 			paramMap.set('source', source.name);
-			paramMap.set('dest', (dest == null) ? null : dest.name);
+			paramMap.set('sourcepath', this.localPathOnly(source.name));
+			paramMap.set('sourcefile', source.getFilename());
+			if (dest != null) {
+				paramMap.set('dest', dest.name);
+				paramMap.set('destpath', this.localPathOnly(dest.name));
+				paramMap.set('destfile', dest.getFilename());
+			}
+			else {
+				paramMap.set('dest', '');
+				paramMap.set('destpath', '');
+				paramMap.set('destfile', '');
+			}
+			
 			var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
 			var traceMsg = this.formatProgressMsg(cmdName, source, dest, finalArgs, 'shortForm');
 			this.executeChildProcess(cmdName, finalArgs, traceMsg, paramMap);
@@ -697,6 +707,7 @@ module.exports = class Prorenata {
 	//> cmdName is for console feedback: expects 'run', 'then', 'else', or one of the template-defined commands
 	//> finalArgs[0] is the executable filename, finalArgs[1]...[N] are the arguments
 	//> traceMsg is the progress message to send to the terminal
+	//> paramMap is needed for its values: 'onerror' and 'progress'
 	//< returns undefined 
 	executeChildProcess(cmdName, finalArgs, traceMsg, paramMap) {
 		expect(cmdName, 'String');
@@ -795,6 +806,8 @@ module.exports = class Prorenata {
 	//> fullyQualifiedFilename
 	//< shorter name
 	shortDisplayFilename(fullyQualifiedFilename) {
+		expect(fullyQualifiedFilename, 'String');
+		
 		var leadingPart = this.instructionPfile.getPath();
 		if (fullyQualifiedFilename.indexOf(leadingPart) == 0)
 			return fullyQualifiedFilename.substr(leadingPart.length + 1);
@@ -815,6 +828,18 @@ module.exports = class Prorenata {
 		return fullyQualifiedFilename;
 	}
 	
+	//^ For <sourcepath> and <destpath>, remove the common leading path portion
+	//> fullyQualifiedFilename
+	//< shorter name
+	localPathOnly(fullyQualifiedFilename) {
+		expect(fullyQualifiedFilename, 'String');
+		
+		var pathAndFilename = this.shortDisplayFilename(fullyQualifiedFilename);
+		var pfile = new Pfile(pathAndFilename);
+		var pathOnly = pfile.getPath();
+		return pathOnly;
+	}
+
 	//< return true if the trailing part of the path matches one of the patterns to include
 	//< also returns true if there are no patterns.
 	isIncluded(path, cmdName, includePatterns, paramMap) {
@@ -1098,7 +1123,7 @@ module.exports = class Prorenata {
 	//> paramMap is a map of paramName --> paramValue of the group we are working on
 	//< returns an array of final args, where
 	//     finalArgs[0] is the executable command,
-	//     <substitution> parameters are replaced with their corrects values,
+	//     <substitution> parameters are replaced with their correct values,
 	//     all other args are passed through as-is.
 	replaceParamsWithValues(processArgs, paramMap) {
 		expect(processArgs, 'Array');
@@ -1108,17 +1133,13 @@ module.exports = class Prorenata {
 		finalArgs.push(processArgs[0]); 								// the executable command
 
 		for (let i=1; i < processArgs.length; i++) {
-			var template = processArgs[i];								// like <source>
-			if ((template.charAt(0) == '<') && (template.charAt(template.length-1) == '>')) { 
-				var unadorned = template.substr(1, template.length-2);	// like source
-				if (paramMap.has(unadorned)) {
-					var replacementValue = paramMap.get(unadorned);
-					finalArgs.push(replacementValue);
-					continue;
-				}
+			var template = processArgs[i];								// like source
+			for (let [param, value] of paramMap.entries()) {
+				var substitutionVar = `<${param}>`;						// like <source>
+				template = template.replace(substitutionVar, value);
 			}
-			finalArgs.push(processArgs[i]);								// pass through as-is
-		}
+			finalArgs.push(template);
+		}		
 		return finalArgs;
 	}
 	

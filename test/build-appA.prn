@@ -1,19 +1,10 @@
 !blue 2.0
 
 template {
-	bifurcate 	 bifurcate <source> <dest> --define=RWDOC
-	//blue 		 blue compile <source> <dest> --progress
-	blue 		 node /musings/lib/bluephrase/dist/main.js compile <source> <dest> --progress
-	// uglify       node C:/Users/Propellerhead/AppData/Roaming/npm/node_modules/uglify-es/bin/uglifyjs <source> --output <dest> --ecma 8 --compress		/* npm install uglify-es -g */
+	blue 		 blue compile <source> <dest> --progress
 }
 
-/*
-TODO list all files in <dest> that are not in <source>
-compare {
-	source 
-	dest
-}
-*/
+
 // ---------- merge appA proto --> appA fused ---------- 
 copy {
 	source    '../test/appA/proto'
@@ -37,8 +28,8 @@ copy {
 //
 //  ---------- process blue-phrase --> html ---------- 
 recurse {
-	source     /musings/lib/prorenata/test/appA/fused/blue
-	dest       /musings/lib/prorenata/test/appA/fused/html
+	source     /palau/lib/prorenata/test/appA/fused/blue
+	dest       /palau/lib/prorenata/test/appA/fused/html
 	extension  html
 	exec       blue
 	overwrite  older

@@ -1,0 +1,43 @@
+!blue 2.0
+//=============================================================================
+//
+// File:         bluephrase/searchwords/pro/semwords
+// Language:     prorenata script
+// Copyright:    Joe Honton © 2019
+// License:      CC-BY-NC-ND 4.0
+// Initial date: Oct 19, 2019
+// Contents:     Run semwords on all .blue files 
+//
+//=============================================================================
+
+template {
+	semwords  semwords <source> <dest> --hostpath=https://bluephrase.com/SOURCE/<sourcepath>/FILE/<sourcefile>/DEST/<destpath>/FILE/<destfile>/
+}
+
+// ---------- create wordlist from each .blue file ---------- 
+recurse {
+	source    '../test/appA/fused'
+	dest      '../test/appA/searchwords'
+	include   '*.blue'
+	exclude   '/enclosures'
+	exclude   '/includes'
+	exclude   '/css'
+	exclude   '/html'
+	exclude   '/img'
+	exclude   '/js'
+	exclude   '/tmp'
+	overwrite always
+	mkdir     true
+	extension 'words'
+	exec      semwords
+	progress  verbose
+	onerror   halt
+}
+
+// ---------- look for cruft searchwords/*.words compared to original public/*.blue ---------- 
+compare {
+	source    '../test/appA/searchwords'
+	dest      '../test/appA/fused'
+	extension 'blue'
+}
+

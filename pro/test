@@ -11,7 +11,7 @@
 //=============================================================================
 
 //
-// ---------- use previously-deployed prorenata to execute just-compiled dbg version ---------- 
+// ---------- use previously-deployed prorenata to launch just-compiled dbg version ---------- 
 run {
 	//sh node ../dbg/main.js ../test/build-appA.prn
 	//sh node ../dbg/main.js ../test/run.prn
@@ -24,5 +24,6 @@ run {
 	//sh node ../dbg/main.js ../test/halt-on-error.prn
 	//sh node ../dbg/main.js ../test/compare.prn
 	//sh node ../dbg/main.js ../test/clean.prn
-	sh node ../dbg/main.js ../test/conditional.prn
+	//sh node ../dbg/main.js ../test/conditional.prn
+	sh node ../dbg/main.js ../test/sourcepath.prn
 }
