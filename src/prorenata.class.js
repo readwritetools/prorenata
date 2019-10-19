@@ -90,7 +90,7 @@ export default class Prorenata {
 			this.root = fileInterface.readFile(this.instructionPfile.name);
 		}
 		catch (err) {
-			log.abnormal(err);
+			terminal.abnormal(err);
 		}
 	}	
 	
@@ -194,8 +194,6 @@ export default class Prorenata {
 		var processArgs = cmdTemplate.split(' ');		// careful: this splits the template using spaces, which may present problems when not fastidious
 		var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
 		
-		var source = paramMap.get('source');
-		var dest = paramMap.get('dest');
 		var traceMsg = this.formatProgressMsg(cmdName, null, null, finalArgs, 'argsForm');
 		this.executeChildProcess(cmdName, finalArgs, traceMsg, paramMap);
 	}
@@ -652,7 +650,7 @@ export default class Prorenata {
 					return;
 				}
 			}
-			
+
 			paramMap.set('source', source.name);
 			paramMap.set('dest', (dest == null) ? null : dest.name);
 			var finalArgs = this.replaceParamsWithValues(processArgs, paramMap);
@@ -697,6 +695,7 @@ export default class Prorenata {
 	//> cmdName is for console feedback: expects 'run', 'then', 'else', or one of the template-defined commands
 	//> finalArgs[0] is the executable filename, finalArgs[1]...[N] are the arguments
 	//> traceMsg is the progress message to send to the terminal
+	//> paramMap is needed for its values: 'onerror' and 'progress'
 	//< returns undefined 
 	executeChildProcess(cmdName, finalArgs, traceMsg, paramMap) {
 		expect(cmdName, 'String');
@@ -1098,7 +1097,7 @@ export default class Prorenata {
 	//> paramMap is a map of paramName --> paramValue of the group we are working on
 	//< returns an array of final args, where
 	//     finalArgs[0] is the executable command,
-	//     <substitution> parameters are replaced with their corrects values,
+	//     <substitution> parameters are replaced with their correct values,
 	//     all other args are passed through as-is.
 	replaceParamsWithValues(processArgs, paramMap) {
 		expect(processArgs, 'Array');

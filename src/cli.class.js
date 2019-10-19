@@ -126,12 +126,12 @@ export default class CLI {
 		s.push("   <extension>   the filename extension to apply to destination filenames");
 		s.push("   <exec>        a command name defined in the 'template' section");
 		s.push("   <overwrite>   := always | older | never†");
-		s.push("   <mkdir>       := true | false† (create missing directories)");
+		s.push("   <mkdir>       := true† | false (create missing directories)");
 		s.push("   <preserve>    := true | false† (preserve timestamps)");
 		s.push("   <trigger>     an absolute or relative filename");
 		s.push("   <dependent>+  an absolute or relative path");
 		s.push("   <sh>+         a shell command to execute");
-		s.push("   <if>+         a conditional if [hostname == | hostname !=] then ... else ...");
+		s.push("   <if>+         a conditional if [hostname ==] | [hostname !=] then ... else ...");
 		s.push("   <progress>    := verbose | regular† | none");
 		s.push("   <onerror>     := continue | halt†");
 		s.push("");
