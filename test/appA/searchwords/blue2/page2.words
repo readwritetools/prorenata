@@ -1,2 +1,8 @@
 !rwsearch 1.0 wordcounts
-!hostpath https://bluephrase.com/SOURCE/appA/fused/blue2/FILE/page2.blue/DEST/appA/searchwords/blue2/FILE/page2.words/page2.blue
+!hostPath https://bluephrase.com/SOURCE/appA/fused/blue2/FILE/page2.blue/DEST/appA/searchwords/blue2/FILE/page2.words/page2.blue
+!title Placeholder
+!rawWordCount 1
+!filteredWordCount 1
+!uniqueWordCount 1
+!totalWeight 1
+placeholder 1

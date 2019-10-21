@@ -82,6 +82,7 @@ export default class Prorenata {
 			var fileInterface = new FileInterface();
 			fileInterface.setOption('vocabulary', 'unchecked');		// treat the first word of every line as 'semantax' 
 			fileInterface.setOption('shorthand', 'limited'); 		// honor `sourceref` and *attribute syntax
+			fileInterface.setOption('fragment');
 			fileInterface.setOption('noindexmarks');
 			fileInterface.setOption('nolistmarks');
 			fileInterface.setOption('nocitemarks');
