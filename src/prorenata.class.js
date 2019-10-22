@@ -1107,8 +1107,10 @@ export default class Prorenata {
 		
 		// are there any parameters specified by the user, but not required or optional
 		for (let [paramName, paramValue] of paramMap.entries()) {
-			if (!requiredParams.includes(paramName) && !optionalParams.includes(paramName))
-				terminal.warning(blue(cmd), ' does not use the parameter ', red(`<${paramName}>`), ', ignorning ', red(paramValue));
+			if (!requiredParams.includes(paramName) && !optionalParams.includes(paramName)) {
+				if (paramName.indexOf('arg') == -1)
+					terminal.warning(blue(cmd), ' does not use the parameter ', red(`<${paramName}>`), ', ignorning ', red(paramValue));
+			}
 		}
 		
 		// are there any required parameters that are not provided by the user

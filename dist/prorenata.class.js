@@ -416,7 +416,7 @@ module.exports = class Prorenata {
         i = [ 'dest', 'include', 'exclude', 'overwrite', 'mkdir', 'extension', 'progress', 'onerror' ]; else if ('compare' == e) t = [ 'source', 'dest' ], 
         i = [ 'include', 'exclude', 'extension', 'onerror' ]; else if ('clean' == e) t = [ 'trigger', 'dependent' ], 
         i = [ 'progress', 'onerror' ]; else if ('run' == e) t = [], i = [ 'sh', 'if', 'progress', 'onerror' ]; else terminal.logic('verifyBuiltinParams');
-        for (let [n, a] of r.entries()) t.includes(n) || i.includes(n) || terminal.warning(blue(e), ' does not use the parameter ', red(`<${n}>`), ', ignorning ', red(a));
+        for (let [n, a] of r.entries()) t.includes(n) || i.includes(n) || -1 == n.indexOf('arg') && terminal.warning(blue(e), ' does not use the parameter ', red(`<${n}>`), ', ignorning ', red(a));
         for (let i = 0; i < t.length; i++) r.has(t[i]) || terminal.warning(blue(e), ' expects a parameter named ', red(`<${t[i]}>`));
     }
     replaceParamsWithValues(e, r) {
