@@ -23,7 +23,7 @@
 
 <table>
 	<tr><th>Abstract</th></tr>
-	<tr><td>The <span class=product>prorenata</span> build tool is used to execute a sequence of commands on a hierarchy of file paths, using a parameters that are defined with a declarative approach, rather than a procedural approach.</td></tr>
+	<tr><td>The <span class=product>prorenata</span> build tool is used to execute a sequence of commands on a hierarchy of file paths, using parameters that are defined with a declarative approach, rather than a procedural approach.</td></tr>
 </table>
 
 ### Motivation
