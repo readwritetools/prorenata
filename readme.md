@@ -45,8 +45,8 @@ means "as the circumstance arises".
 The <span>prorenata</span> utility uses Node.js. Package installation is
 done via NPM.
 
-This utility requires the  parser, which is distributed with each copy of
-validly licensed Read Write Tools premium tools.
+This utility requires the BLUE-PHRASE parser, which is distributed with each
+copy of validly licensed Read Write Tools premium tools.
 
 To install the utility and make it available to your Bash shell, use this
 command.
