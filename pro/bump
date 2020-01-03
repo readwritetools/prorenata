@@ -3,8 +3,8 @@
 //
 // File:         prorenata/pro/bump
 // Language:     prorenata script
-// Copyright:    Joe Honton © 2018
-// License:      CC-BY-NC-ND 4.0
+// Copyright:    Read Write Tools © 2018
+// License:      MIT
 // Initial date: Jan 4, 2019
 // Contents:     Bump version, push repo
 //
@@ -13,5 +13,10 @@
 
 // ---------- bump version and push repo to origin ---------- 
 run {
-	sh npm version patch && git push && git push --tags 
+	sh npm version patch
+	sh git push origin master
+	sh git push origin master --tags
+	sh git push github master
+	sh git push github master --tags
+	onerror continue
 }

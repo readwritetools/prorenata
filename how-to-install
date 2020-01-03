@@ -1,9 +1,0 @@
-// install prorenata using npm with global switch
-[root]# npm install -g git+ssh://root@nk024:/keep/prorenata
-
-// verify installation
-[root]# npm -g bin
-/usr/bin
-
-[root]# ls -lia /usr/bin/prn
-46841 lrwxrwxrwx. 1 root root 37 Jan  6 15:46 /usr/bin/prn -> ../lib/node_modules/prorenata/bin/prn

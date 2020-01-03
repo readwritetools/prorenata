@@ -1,4 +1,4 @@
-/* Copyright (c) 2019 Read Write Tools */
+/* Copyright (c) 2018 Read Write Tools */
 var expect = require('joezone').expect, terminal = require('joezone').terminal, Pfile = require('joezone').Pfile, Prorenata = require('./prorenata.class.js'), fs = require('fs');
 
 module.exports = class CLI {

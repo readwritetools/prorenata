@@ -1,0 +1,23 @@
+!blue 2.0
+//=============================================================================
+//
+// File:         prorenata/pro/publish
+// Language:     prorenata script
+// Copyright:    Read Write Tools © 2020
+// License:      MIT
+// Initial date: Jan 1, 2020
+// Contents:     Publish to NPM
+//
+//=============================================================================
+
+
+// ---------- check make sure repo has no uncommited work ---------- 
+run {
+	sh git diff-index --quiet HEAD
+}
+
+
+// ----------------------- publish to NPM  ------------------------- 
+run {
+	sh npm publish ../
+}

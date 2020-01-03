@@ -2,8 +2,8 @@
 //
 // File:         prorenata/src/prorenata.class.js
 // Language:     ECMAScript 2015
-// Copyright:    Joe Honton © 2017
-// License:      CC-BY-NC-ND 4.0
+// Copyright:    Read Write Tools © 2018
+// License:      MIT
 // Initial date: Dec 31, 2017
 // Usage:        renata scriptfile
 //

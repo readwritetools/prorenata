@@ -1,4 +1,4 @@
-/* Copyright (c) 2019 Read Write Tools */
+/* Copyright (c) 2018 Read Write Tools */
 var expect = require('joezone').expect, Pfile = require('joezone').Pfile, Bunch = require('joezone').Bunch, terminal = require('joezone').terminal, FileInterface = require('bluephrase').FileInterface, RootEntity = require('bluephrase').RootEntity, EntityPath = require('bluephrase').EntityPath, TT = require('bluephrase').TT, fs = require('fs'), os = require('os'), ChildProcess = require('child_process');
 
 terminal.setProcessName('[prn]');

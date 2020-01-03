@@ -1,0 +1,13 @@
+/* CSS */
+
+body {
+	max-width: 50rem;
+}
+h1 {
+	color: blue;
+	text-align: center;
+}
+img {
+	padding: 2rem;
+	border: 4rem solid black;
+}
