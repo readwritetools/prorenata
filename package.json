@@ -1,6 +1,6 @@
 {
   "name": "prorenata",
-  "version": "1.0.50",
+  "version": "1.0.51",
   "description": "Declarative task runner with commands that work on file path hierarchies",
   "author": "Read Write Tools",
   "license": "MIT",
