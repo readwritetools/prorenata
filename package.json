@@ -22,7 +22,8 @@
   "keywords": [
     "cli",
     "task runner",
-    "build tool"
+    "build tool",
+    "readwritetools"
   ],
   "bugs": {
     "url": "https://github.com/readwritetools/prorenata/issues"

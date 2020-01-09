@@ -186,12 +186,10 @@ count-by-ext {
 }
 ```
 
-### License and availability
+### License
 
 The <span>prorenata</span> command line utility is licensed under the MIT
-License. It may be cloned from <a href='https://github.com/readwritetools/prorenata'>Github</a>
-, or installed via <a href='https://www.npmjs.com/package/prorenata'>NPM</a>
-.
+License.
 
 <img src='/img/blue-seal-mit.png' width=80 align=right />
 
@@ -202,4 +200,13 @@ License. It may be cloned from <a href='https://github.com/readwritetools/proren
 	<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
 	<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
 </details>
+
+### Availability
+
+
+<table>
+	<tr><td>Source code</td> 			<td><a href='https://github.com/readwritetools/prorenata'>github</a></td></tr>
+	<tr><td>Package installation</td> <td><a href='https://www.npmjs.com/package/prorenata'>NPM</a></td></tr>
+	<tr><td>Documentation</td> 		<td><a href='https://hub.readwritetools.com/tasks/prorenata.blue'>Read Write Hub</a></td></tr>
+</table>
 
