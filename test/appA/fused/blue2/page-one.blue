@@ -1,0 +1,12 @@
+!blue 2.0
+html {
+	head {
+		link *type=stylesheet `../css/page-one.css`
+	}
+	body {
+		h1 Hello
+		img `../img/windrose-250px.png` *onclick='onClickWindrose()'
+	
+		script `../code/page-one-handler.js`
+	}
+}
