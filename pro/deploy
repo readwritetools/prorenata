@@ -1,15 +1,23 @@
 !blue 2.0
 /*=============================================================================
 //
-// File:         prorenata/pro/bump
+// File:         prorenata/pro/deploy
 // Language:     prorenata script
 // Copyright:    Read Write Tools © 2018
 // License:      MIT
 // Initial date: Jan 4, 2019
-// Contents:     Bump version, push repo
+// Contents:     Check for pending work, commit, bump version, push repo
 //
 =============================================================================*/
 
+
+// ---------- check to make sure repo has no uncommited work ---------- 
+run {
+	sh git add ../
+	sh git commit -m "deploy"
+	sh git push
+	onerror continue
+}
 
 // ---------- bump version and push repo to origin ---------- 
 run {

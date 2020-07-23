@@ -15,7 +15,7 @@ run {
 	sh renata exim				// convert any modified .js         from src --> dbg
 	sh renata test				// bequiesce tests
 	sh renata finalize			// minify js; copyright; copy files from dbg --> dist
-	sh renata bump				// bump version; push repo
+	sh renata deploy			// check for pending work, commit, bump version, push repo
 	sh renata installg			// install as global utility
 	sh renata publish			// publish to NPM
 }

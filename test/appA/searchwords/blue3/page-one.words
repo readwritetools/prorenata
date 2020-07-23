@@ -2,6 +2,7 @@
 !hostPath https://bluephrase.com/SOURCE/appA/fused/blue3/FILE/page-one.blue/DEST/appA/searchwords/blue3/FILE/page-one.words/page-one.blue
 !rawWordCount 1
 !filteredWordCount 1
+!significantWordCount 1
 !uniqueWordCount 1
 !totalWeight 1
 hello 1
