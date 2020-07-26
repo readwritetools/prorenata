@@ -25,7 +25,7 @@ recurse {
 
 // ---------- Convert blue document into Github Flavored readme.md ---------- 
 recurse {
-	source '/palau/www/hub.readwritetools.com/tasks/ghfm/prorenata.blue'
+	source '/palau/srv/hub.readwritetools.com/tasks/ghfm/prorenata.blue'
 	dest   '../readme.md' 
 	overwrite always
 	exec ghfm

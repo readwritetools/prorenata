@@ -13,7 +13,13 @@
 // ---------- install app to user's path ---------- 
 run {
 	if hostname == CE018 then echo "Can not use renata to install renata on Windows. Issue command from console."
-	if hostname != CE018 then npm -g bin   // show target destination
-	if hostname != CE018 then npm install -g git+ssh://root@nk024:/keep/prorenata
-	if hostname != CE018 then renata --version
+	
+	// npm -g bin
+	// npm install -g prorenata@latest
+	// renata --version
+	
+	if hostname != CE018 then ssh nk024 npm install -g prorenata@latest
+	if hostname != CE018 then ssh nk025 npm install -g prorenata@latest
+	if hostname != CE018 then ssh nk026 npm install -g prorenata@latest
+	if hostname != CE018 then ssh nk027 npm install -g prorenata@latest
 }
